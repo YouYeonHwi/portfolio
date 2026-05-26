@@ -1,235 +1,608 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YH NAVIGATOR — 꿈을 그리고, 일상을 운영하다</title>
-  <meta name="description" content="자기경영 워크북 기반 라이프 코칭. 행복요소 진단부터 꿈 전개도, 일상 실행까지 — 인생의 항로를 설계합니다." />
-  <!-- 테마 초기화 (CSS 로드 전 — FOUC 방지) -->
-  <script>
-    (function () {
-      var saved = localStorage.getItem('yh-theme');
-      var theme = saved === 'dark' || saved === 'light' ? saved : 'light';
-      document.documentElement.setAttribute('data-theme', theme);
-    })();
-  </script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>여니 | AI · Automation · Game Dev 3D 포트폴리오</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="AI, LLM, RAG 자동화 시스템 연구자이자 5년 차 강사, 그리고 3D 전통 게임 개발을 융합하는 여니(Yeoni)의 인터랙티브 3D 포트폴리오 사이트입니다.">
+  <meta name="keywords" content="AI, LLM, RAG, 자동화, 스마트팩토리, 문경새재, 게임개발, 박사과정, 교육, 여니, 포트폴리오">
+  <meta name="author" content="여니 (Yeoni)">
+  <meta property="og:title" content="여니 | AI · Automation · Game Dev 3D 포트폴리오">
+  <meta property="og:description" content="AI 연구와 실무 자동화, 문경새재 3D 게임 개발의 세계관을 탐험하는 인터랙티브 웹 전시관">
+  <meta property="og:type" content="website">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Style Sheet -->
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="loading-state">
 
-  <!-- 네비게이션 -->
-  <nav class="nav">
-    <a href="index.html" class="nav-brand">
-      <span class="nav-brand-mark"></span>
-      <span>YH NAVIGATOR</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html" class="active">홈</a></li>
-      <li><a href="methodology.html">방법론</a></li>
-      <li><a href="coaches.html">코치 소개</a></li>
-      <li><a href="matching.html">코치 매칭</a></li>
-    </ul>
-    <div class="nav-right">
-      <button class="theme-toggle" aria-label="테마 전환">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <!-- 커스텀 마우스 HUD 커서 -->
+  <div id="custom-cursor" class="custom-cursor">
+    <div class="cursor-dot"></div>
+    <div class="cursor-circle">
+      <div class="crosshair-x"></div>
+      <div class="crosshair-y"></div>
+    </div>
+  </div>
+
+  <!-- 시스템 초기화/로딩 스크린 -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-container">
+      <div class="hud-scanner"></div>
+      <div class="terminal-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">SYSTEM INITIATION</span>
+      </div>
+      <div class="loading-content">
+        <h1 class="glitch-text" data-text="YEONI_CORE_V1.0">YEONI_CORE_V1.0</h1>
+        <div class="progress-bar-container">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div class="status-logs" id="status-logs">
+          <p class="status-log">> CONNECTING TO DATABASE...</p>
+          <p class="status-log">> LOADING THREE.JS WEBGL RENDERER...</p>
+          <p class="status-log">> INITIATING PARTICLE NEBULA CORE...</p>
+          <p class="status-log">> SYNCHRONIZING HUMAN-COGNITIVE INTERFACE...</p>
+          <p class="status-log">> SYSTEM READY.</p>
+        </div>
+        <button id="btn-enter" class="btn-enter disabled" disabled>SYSTEM ACCESS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js 3D 캔버스 -->
+  <canvas id="three-canvas" class="webgl-canvas"></canvas>
+
+  <!-- 글로벌 HUD 오버레이 -->
+  <header class="hud-header">
+    <div class="hud-logo-container">
+      <div class="hud-logo">YEONI_SYS</div>
+      <div class="hud-line"></div>
+      <div class="hud-subtitle">AI & GAME RESEARCH LAB</div>
+    </div>
+    
+    <nav class="hud-nav" id="hud-nav-menu">
+      <a href="#hero" class="nav-item active" id="nav-hero"><span class="nav-num">01</span> HERO</a>
+      <a href="#about" class="nav-item" id="nav-about"><span class="nav-num">02</span> ABOUT</a>
+      <a href="#research" class="nav-item" id="nav-research"><span class="nav-num">03</span> RESEARCH</a>
+      <a href="#lecture" class="nav-item" id="nav-lecture"><span class="nav-num">04</span> LECTURE</a>
+      <a href="#game" class="nav-item" id="nav-game"><span class="nav-num">05</span> GAME PROJECT</a>
+      <a href="#projects" class="nav-item" id="nav-projects"><span class="nav-num">06</span> PROJECTS</a>
+      <a href="#contact" class="nav-item" id="nav-contact"><span class="nav-num">07</span> CONTACT</a>
+    </nav>
+
+    <!-- 오디오 활성화/음소거 HUD 버튼 -->
+    <div class="hud-controls">
+      <button id="audio-toggle" class="audio-btn" aria-label="사운드 켜기/끄기">
+        <i class="fa-solid fa-volume-xmark" id="audio-icon"></i>
+        <span class="audio-text">AUDIO OFF</span>
       </button>
-      <a href="matching.html" class="nav-cta">무료 매칭 받기</a>
     </div>
-  </nav>
+  </header>
 
-  <!-- 히어로 -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-grid">
-        <div class="reveal visible">
-          <span class="eyebrow">자기경영 코칭 랩</span>
-          <h1>
-            인생의 항로를 <br />
-            <span class="gradient-text">스스로 설계</span>하다.
+  <!-- 우측 사이드 HUD 인디케이터 -->
+  <div class="side-hud-indicator">
+    <div class="indicator-bar">
+      <div class="indicator-fill" id="indicator-fill"></div>
+    </div>
+    <div class="section-bullets">
+      <a href="#hero" class="bullet active" data-section="0"></a>
+      <a href="#about" class="bullet" data-section="1"></a>
+      <a href="#research" class="bullet" data-section="2"></a>
+      <a href="#lecture" class="bullet" data-section="3"></a>
+      <a href="#game" class="bullet" data-section="4"></a>
+      <a href="#projects" class="bullet" data-section="5"></a>
+      <a href="#contact" class="bullet" data-section="6"></a>
+    </div>
+    <div class="coordinate-display">
+      <div class="coord-item">SYS_STAT: <span class="neon-cyan">ONLINE</span></div>
+      <div class="coord-item">COORD_X: <span id="coord-x" class="neon-purple">0.00</span></div>
+      <div class="coord-item">COORD_Y: <span id="coord-y" class="neon-purple">0.00</span></div>
+    </div>
+  </div>
+
+  <!-- 스크롤 컨테이너 (Lenis 스무스 스크롤 적용 대상) -->
+  <main class="scroll-container">
+
+    <!-- 1. HERO SECTION -->
+    <section id="hero" class="panel hero-panel">
+      <div class="section-glow hero-glow"></div>
+      <div class="content-wrapper">
+        <div class="hud-box hero-intro-box">
+          <div class="hud-corner-top-left"></div>
+          <div class="hud-corner-top-right"></div>
+          <div class="hud-corner-bottom-left"></div>
+          <div class="hud-corner-bottom-right"></div>
+          
+          <span class="hud-tag">YEONI INITIALIZATION //</span>
+          <h1 class="hero-title">
+            <span class="text-gradient-purple">AI RESEARCH</span><br>
+            <span class="text-gradient-cyan">& AUTOMATION</span><br>
+            <span class="text-white">& GAME DEV</span>
           </h1>
-          <p class="lead">
-            행복요소 진단부터 꿈 전개도, 6단계 목표 분해, 매일의 실행과 회고까지 —
-            YH NAVIGATOR는 20년 검증된 자기경영 방법론을 디지털로 옮긴 라이프 코칭 플랫폼입니다.
+          <p class="hero-lead">
+            "기술을 실제 문제 해결에 연결하고, 나를 하나의 인터랙티브한 세계관으로 표현합니다."
           </p>
+          <div class="hero-badge-container">
+            <span class="hero-badge"><i class="fa-solid fa-graduation-cap"></i> Ph.D Candidate</span>
+            <span class="hero-badge"><i class="fa-solid fa-chalkboard-user"></i> AI Educator</span>
+            <span class="hero-badge"><i class="fa-solid fa-gamepad"></i> Game Architect</span>
+          </div>
           <div class="hero-actions">
-            <a href="matching.html" class="btn btn-primary">
-              나에게 맞는 코치 찾기
-              <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12h14M13 5l7 7-7 7" />
-              </svg>
-            </a>
-            <a href="methodology.html" class="btn btn-ghost">방법론 살펴보기</a>
+            <a href="#about" class="hud-btn primary" id="btn-explore">EXPLORE WORLD <i class="fa-solid fa-arrow-down-long animate-bounce"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-down-hint">
+        <span class="scroll-text">SCROLL TO SYSTEM DEPLOYMENT</span>
+        <div class="scroll-mouse">
+          <div class="scroll-wheel"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ABOUT SECTION -->
+    <section id="about" class="panel about-panel">
+      <div class="content-wrapper">
+        <div class="section-header text-center">
+          <span class="section-tag">[ SYSTEM_02: IDENTITY ]</span>
+          <h2 class="section-title">ABOUT ME</h2>
+          <div class="title-line"></div>
+        </div>
+        
+        <div class="about-grid">
+          <!-- 프로필 카드 (글래스모피즘) -->
+          <div class="hud-card profile-card">
+            <div class="profile-glow"></div>
+            <div class="avatar-container">
+              <div class="avatar-hud-ring"></div>
+              <div class="avatar-placeholder">
+                <i class="fa-solid fa-user-astronaut"></i>
+              </div>
+            </div>
+            <h3 class="profile-name">여니 (Yeoni)</h3>
+            <p class="profile-sub">한국기술교육대학교 컴퓨터공학 박사과정</p>
+            <div class="profile-divider"></div>
+            <div class="profile-details">
+              <p><strong><i class="fa-solid fa-crosshair neon-cyan"></i> 전문 분야:</strong> AI, LLM, RAG, 스마트팩토리 제조 데이터 자동화</p>
+              <p><strong><i class="fa-solid fa-bolt neon-purple"></i> 핵심 강점:</strong> 연구 + 실무 + 교육을 연결하는 문제 해결 능력</p>
+            </div>
+          </div>
+
+          <!-- 3대 정체성 코어 카드 -->
+          <div class="about-core-container">
+            <div class="hud-card core-card research-core">
+              <div class="core-icon-box"><i class="fa-solid fa-brain"></i></div>
+              <div class="core-text">
+                <h4>RESEARCH / 연구</h4>
+                <p>LLM 및 RAG 기반 AI Agent 연구와 HCI(인간-컴퓨터 상호작용) 인지 인터페이스 연구를 통해 복잡한 데이터를 인간 중심의 지식으로 정제하는 가치 있는 연구를 지속하고 있습니다.</p>
+              </div>
+            </div>
+            
+            <div class="hud-card core-card dev-core">
+              <div class="core-icon-box"><i class="fa-solid fa-gears"></i></div>
+              <div class="core-text">
+                <h4>AUTOMATION / 실무</h4>
+                <p>스마트팩토리 및 제조 현장의 대규모 데이터 자동 처리 파이프라인 설계, React Native Expo 기반 모바일 및 풀스택 웹 개발 실무를 통해 비즈니스 현장의 생산성을 향상시킵니다.</p>
+              </div>
+            </div>
+
+            <div class="hud-card core-card edu-core">
+              <div class="core-icon-box"><i class="fa-solid fa-chalkboard-user"></i></div>
+              <div class="core-text">
+                <h4>EDUCATION / 교육</h4>
+                <p>어려운 고급 기술을 누구나 직관적으로 이해할 수 있도록 구조화하여 가르치는 5년 차 실무형 AI 및 자동화 전문 강사입니다. 실습과 핵심 문제해결 중심의 강의를 전개합니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. RESEARCH SECTION -->
+    <section id="research" class="panel research-panel">
+      <div class="content-wrapper">
+        <div class="section-header text-center">
+          <span class="section-tag">[ SYSTEM_03: INTELLECTUAL_CORE ]</span>
+          <h2 class="section-title">RESEARCH</h2>
+          <div class="title-line"></div>
+        </div>
+
+        <div class="research-container">
+          <!-- 3D 노드 시각화 캔버스 보조 및 안내 -->
+          <div class="research-visual-info">
+            <p class="visual-guide"><i class="fa-solid fa-eye-dropper"></i> 3D 백그라운드의 빛나는 인공신경망 노드들을 드래그하거나 회전해 보세요.</p>
+          </div>
+
+          <div class="research-cards-grid">
+            <div class="hud-card research-card" data-node="0">
+              <div class="card-num">01</div>
+              <h3 class="card-title">LLM & RAG System</h3>
+              <p class="card-desc">대규모 언어 모델(LLM)과 검색 증강 생성(RAG)을 결합하여, 기업 내부 데이터와 외부 지식을 실시간으로 통합 탐색하고 왜곡 현상(Hallucination) 없이 정확한 지식을 추론하는 최첨단 아키텍처를 연구합니다.</p>
+              <div class="card-tags">
+                <span>RAG</span><span>Vector DB</span><span>LangChain</span>
+              </div>
+            </div>
+
+            <div class="hud-card research-card" data-node="1">
+              <div class="card-num">02</div>
+              <h3 class="card-title">AI Agents</h3>
+              <p class="card-desc">주어진 목표에 대해 스스로 계획(Planning)을 수립하고, 다양한 외부 도구(Tools)를 자율적으로 호출하며 협업하여 복잡한 다단계 비즈니스 문제를 해결하는 멀티 에이전트 시스템을 모델링합니다.</p>
+              <div class="card-tags">
+                <span>AutoGPT</span><span>Tool Use</span><span>Multi-Agent</span>
+              </div>
+            </div>
+
+            <div class="hud-card research-card" data-node="2">
+              <div class="card-num">03</div>
+              <h3 class="card-title">Human-Computer Interaction (HCI)</h3>
+              <p class="card-desc">AI 에이전트와 인간 사용자의 상호작용 과정에서 인지 부하(Cognitive Load)를 줄이고 의사결정의 투명성과 신뢰성을 높여주는 인지적 인터페이스(Cognitive Interface) 및 가상 협업 인터랙션을 디자인합니다.</p>
+              <div class="card-tags">
+                <span>HCI</span><span>Cognitive Load</span><span>Explainable AI</span>
+              </div>
+            </div>
+
+            <div class="hud-card research-card" data-node="3">
+              <div class="card-num">04</div>
+              <h3 class="card-title">Information Filtering</h3>
+              <p class="card-desc">방대한 스마트팩토리 데이터 및 웹 콘텐츠 속에서 불필요한 노이즈를 효과적으로 차단하고, 각 실무자와 의사결정자에게 가장 적합하고 정제된 핵심 정보만을 정밀 필터링하여 매칭하는 정보 분배 시스템을 개발합니다.</p>
+              <div class="card-tags">
+                <span>Recommendation</span><span>Information Retrieval</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. LECTURE SECTION -->
+    <section id="lecture" class="panel lecture-panel">
+      <div class="content-wrapper">
+        <div class="section-header text-center">
+          <span class="section-tag">[ SYSTEM_04: DISSEMINATION ]</span>
+          <h2 class="section-title">LECTURE</h2>
+          <div class="title-line"></div>
+        </div>
+
+        <div class="lecture-grid">
+          <!-- 교육 대시보드 스탯 -->
+          <div class="hud-card stats-dashboard">
+            <h3 class="dashboard-title"><i class="fa-solid fa-circle-nodes neon-cyan"></i> 실무형 AI 교육 임팩트</h3>
+            <div class="stats-container">
+              <div class="stat-box">
+                <span class="stat-num" id="stat-years" data-target="5">0</span><span class="stat-unit">년+</span>
+                <p class="stat-label">강의 경력</p>
+              </div>
+              <div class="stat-box">
+                <span class="stat-num" id="stat-hours" data-target="1500">0</span><span class="stat-unit">시간+</span>
+                <p class="stat-label">누적 교육 시간</p>
+              </div>
+              <div class="stat-box">
+                <span class="stat-num" id="stat-students" data-target="3000">0</span><span class="stat-unit">명+</span>
+                <p class="stat-label">수료 교육생</p>
+              </div>
+            </div>
+            <div class="dashboard-chart-sim">
+              <div class="chart-label">교육 만족도 <span class="pull-right neon-cyan">98.7%</span></div>
+              <div class="chart-bar-container"><div class="chart-bar-fill" style="width: 98.7%"></div></div>
+              <div class="chart-label">실무 적용율 <span class="pull-right neon-purple">92.4%</span></div>
+              <div class="chart-bar-container"><div class="chart-bar-fill purple-fill" style="width: 92.4%"></div></div>
+            </div>
+          </div>
+
+          <!-- 주요 강의 분야와 교육 철학 -->
+          <div class="lecture-details-container">
+            <div class="hud-card details-card">
+              <h3><i class="fa-solid fa-code-branch neon-cyan"></i> 주요 강의 과목</h3>
+              <ul class="lecture-topics">
+                <li><i class="fa-solid fa-check-double neon-cyan"></i> <strong>파이썬 기반 업무 자동화 및 웹 크롤링</strong></li>
+                <li><i class="fa-solid fa-check-double neon-cyan"></i> <strong>RAG & LangChain 활용 AI 챗봇 개발 워크숍</strong></li>
+                <li><i class="fa-solid fa-check-double neon-cyan"></i> <strong>생성형 AI (GPT, Claude) 프롬프트 엔지니어링 실무</strong></li>
+                <li><i class="fa-solid fa-check-double neon-cyan"></i> <strong>공장 제조 데이터 분석 및 예측 모델 수립 교육</strong></li>
+              </ul>
+            </div>
+
+            <div class="hud-card details-card">
+              <h3><i class="fa-solid fa-quote-left neon-purple"></i> 교육 철학</h3>
+              <p class="philosophy-text">
+                "어려운 수식과 추상적인 개념에 매몰되지 않고, 오늘 배운 AI 도구를 내일 당장 자신의 실무 환경에 적용하여 생산성을 10배 이상 향상시키는 '도구로서의 AI 활용'을 최우선 목표로 교육합니다."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. GAME PROJECT SECTION (MAIN SHOWCASE) -->
+    <section id="game" class="panel game-panel">
+      <!-- 몽환적 배경 오버레이 및 안개 분위기 연출 -->
+      <div class="game-ambient-overlay"></div>
+      
+      <div class="content-wrapper">
+        <div class="section-header text-center">
+          <span class="section-tag">[ CORE SHOWCASE: TRADITIONAL GAME DEV ]</span>
+          <h2 class="section-title kr-traditional">문경새재: 깃든 안개</h2>
+          <div class="title-line traditional-line"></div>
+        </div>
+
+        <div class="game-showcase-container">
+          <!-- 왼쪽: 세계관 및 게임 특징 소개 -->
+          <div class="game-info-panel">
+            <div class="traditional-frame">
+              <span class="trad-tag">조선시대 몽환 어드벤처 //</span>
+              <h3 class="game-title">문경새재 (Mungyeong Saejae)</h3>
+              <p class="game-tagline">"새도 날아서 넘기 힘든 험준한 산새, 안개 속에 숨겨진 조선의 역사와 기이한 설화가 깨어난다."</p>
+              
+              <div class="game-description">
+                <p>
+                  문경새재 게임 프로젝트는 단순한 역사 관광 소개를 넘어, <strong>안개 낀 신비로운 산길과 제1관문(주흘관)에서 시작하여 조곡관, 조령관에 이르는 역사적 지형과 조선의 전통적인 한옥, 횃불, 몽환적인 자연 앰비언스</strong>를 탐험하는 3D 인터랙티브 미스터리 어드벤처 경험입니다.
+                </p>
+                <p>
+                  과거 시험을 보기 위해 새재 고개를 오르던 선비들이 겪게 되는 기괴한 민담과 영남대로에 얽힌 왜란의 흔적들을 해결해가며 산의 수호신을 만나는 환상적인 동양 판타지 세계관을 담았습니다.
+                </p>
+              </div>
+
+              <div class="game-features">
+                <div class="feature-badge"><i class="fa-solid fa-wind"></i> 실시간 안개 물리 효과</div>
+                <div class="feature-badge"><i class="fa-solid fa-tree"></i> 전통 한옥 및 숲 에셋</div>
+                <div class="feature-badge"><i class="fa-solid fa-headphones"></i> 3D 공간 음향 (새소리 & 바람 소리)</div>
+                <div class="feature-badge"><i class="fa-solid fa-fire"></i> 다이내믹 라이팅 (횃불 효과)</div>
+              </div>
+
+              <div class="tech-stack-row">
+                <span class="tech-pill">Unreal Engine 5</span>
+                <span class="tech-pill">Three.js</span>
+                <span class="tech-pill">Blender 3D</span>
+                <span class="tech-pill">Substance Painter</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 오른쪽: 인터랙티브 미디어 뷰어 & 환경음 컨트롤러 -->
+          <div class="game-media-panel">
+            <div class="hud-card media-box">
+              <div class="media-header">
+                <span class="pulse-dot green"></span>
+                <span class="media-title">CONCEPTS & GRAPHICS</span>
+              </div>
+              <div class="media-display" id="game-media-display">
+                <!-- Javascript에서 몽환적인 게임 가상 스크린샷 렌더링 -->
+                <div class="game-art-slide active" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1000&auto=format&fit=crop');">
+                  <div class="slide-caption">
+                    <h5>제 1 관문: 주흘관의 안개</h5>
+                    <p>밤안개가 자욱한 영남대로의 첫 번째 성문. 횃불이 빛의 길을 안내합니다.</p>
+                  </div>
+                </div>
+                <div class="game-art-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop');">
+                  <div class="slide-caption">
+                    <h5>깊은 조령 산길</h5>
+                    <p>조선시대 보부상들과 선비들이 쉬어가던 원터(나그네 숙소)와 숲속 옛길.</p>
+                  </div>
+                </div>
+                <div class="game-art-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=1000&auto=format&fit=crop');">
+                  <div class="slide-caption">
+                    <h5>기괴한 산령의 기운</h5>
+                    <p>산불됴심비 한글 표석 부근에서 피어오르는 도깨비불과 숲의 정령들.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 슬라이드 내비게이션 -->
+              <div class="media-controls">
+                <button id="media-prev" class="hud-btn mini"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="media-indicators" id="media-indicators">
+                  <span class="indicator dot active"></span>
+                  <span class="indicator dot"></span>
+                  <span class="indicator dot"></span>
+                </div>
+                <button id="media-next" class="hud-btn mini"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+
+              <!-- 게임 사운드 재생 부가 설명 -->
+              <div class="ambient-sound-status">
+                <i class="fa-solid fa-music"></i>
+                <span>헤드폰 사용 권장: 우측 상단 오디오를 활성화하면 안개 낀 새재 고개의 신비로운 앰비언스가 펼쳐집니다.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. PROJECTS SECTION -->
+    <section id="projects" class="panel projects-panel">
+      <div class="content-wrapper">
+        <div class="section-header text-center">
+          <span class="section-tag">[ SYSTEM_06: SYSTEM_INTEGRATION ]</span>
+          <h2 class="section-title">PROJECTS</h2>
+          <div class="title-line"></div>
+        </div>
+
+        <!-- 프로젝트 카드 목록 -->
+        <div class="projects-grid">
+          
+          <!-- 프로젝트 1 -->
+          <div class="hud-card project-card" data-tilt>
+            <div class="project-image-placeholder border-cyan">
+              <i class="fa-solid fa-robot"></i>
+              <div class="project-overlay-glow"></div>
+            </div>
+            <div class="project-info">
+              <span class="project-category neon-cyan"><i class="fa-solid fa-brain"></i> AI AUTOMATION</span>
+              <h3 class="project-name">Smart Factory Data Pipeling</h3>
+              <p class="project-desc">제조 스마트팩토리 설비에서 초단위로 발생하는 진동·온도 시계열 데이터를 RAG 에이전트를 통해 실시간 이상 감지 및 조치 방법을 추천하는 완전 자동화 제어 솔루션</p>
+              <div class="project-tech">
+                <span>Python</span><span>Kafka</span><span>Elasticsearch</span><span>LLM</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 프로젝트 2 -->
+          <div class="hud-card project-card" data-tilt>
+            <div class="project-image-placeholder border-purple">
+              <i class="fa-solid fa-microchip"></i>
+              <div class="project-overlay-glow"></div>
+            </div>
+            <div class="project-info">
+              <span class="project-category neon-purple"><i class="fa-solid fa-circle-nodes"></i> KNOWLEDGE ENGINE</span>
+              <h3 class="project-name">Personalized RAG Agent</h3>
+              <p class="project-desc">학술 논문 및 강사 개인 연구 자료를 벡터화하여, 사용자의 직무와 지식수준에 맞추어 답변을 정제해 제공하는 맞춤형 지식 필터링 RAG 아시스턴트 웹 서비스</p>
+              <div class="project-tech">
+                <span>React</span><span>FastAPI</span><span>ChromaDB</span><span>Claude-API</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 프로젝트 3 -->
+          <div class="hud-card project-card" data-tilt>
+            <div class="project-image-placeholder border-cyan">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+              <div class="project-overlay-glow"></div>
+            </div>
+            <div class="project-info">
+              <span class="project-category neon-cyan"><i class="fa-solid fa-mobile-screen"></i> MOBILE APPLICATION</span>
+              <h3 class="project-name">Edu-Helper Mobile App</h3>
+              <p class="project-desc">강의 수강생들의 출결 및 실무 과제 제출, 실시간 AI 코드 교정 피드백 기능을 포함하는 React Native Expo 기반 크로스 플랫폼 스마트 교육 서포트 어플리케이션</p>
+              <div class="project-tech">
+                <span>React Native</span><span>Expo</span><span>Firebase</span><span>Tailwind</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 프로젝트 4 -->
+          <div class="hud-card project-card" data-tilt>
+            <div class="project-image-placeholder border-purple">
+              <i class="fa-solid fa-network-wired"></i>
+              <div class="project-overlay-glow"></div>
+            </div>
+            <div class="project-info">
+              <span class="project-category neon-purple"><i class="fa-solid fa-cubes"></i> DATA PIPELINE</span>
+              <h3 class="project-name">Automated Web Scraping Engine</h3>
+              <p class="project-desc">매일 아침 특정 산업군의 기술 트렌드와 뉴스 데이터를 다차원 정제 크롤링하여 요약 레포트를 생성하고 슬랙(Slack) 및 이메일로 자동 브리핑하는 멀티 스레드 스크래퍼</p>
+              <div class="project-tech">
+                <span>Playwright</span><span>Python</span><span>AWS Lambda</span><span>Slack API</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CONTACT SECTION -->
+    <section id="contact" class="panel contact-panel">
+      <div class="content-wrapper">
+        <div class="section-header text-center">
+          <span class="section-tag">[ SYSTEM_07: SECURE_COMMUNICATION ]</span>
+          <h2 class="section-title">CONTACT</h2>
+          <div class="title-line"></div>
+        </div>
+
+        <div class="contact-container">
+          <!-- 왼쪽: 연락처 터미널 콘솔 -->
+          <div class="hud-card terminal-card">
+            <div class="terminal-bar">
+              <span class="terminal-stat"><i class="fa-solid fa-satellite"></i> QUANTUM_LINK: ACTIVE</span>
+            </div>
+            <div class="terminal-body">
+              <div class="console-output">
+                <p class="line"><span class="prompt">guest@yeoni-core:~$</span> cat contact_info.json</p>
+                <p class="response">
+                  {<br>
+                  &nbsp;&nbsp;"name": "여니 (Yeoni)",<br>
+                  &nbsp;&nbsp;"role": "AI Research / Game Architect",<br>
+                  &nbsp;&nbsp;"email": <a href="mailto:dusgn@naver.com" class="neon-cyan">dusgn@naver.com</a>,<br>
+                  &nbsp;&nbsp;"location": "Chungcheongnam-do, Korea",<br>
+                  &nbsp;&nbsp;"git": "github.com/YeonHwi",<br>
+                  &nbsp;&nbsp;"status": "Available for Collaboration & Lecture"<br>
+                  }
+                </p>
+                <p class="line"><span class="prompt">guest@yeoni-core:~$</span> ping -c 3 yeoni.ai</p>
+                <p class="response">
+                  PING yeoni.ai (127.0.0.1) 56(84) bytes of data.<br>
+                  64 bytes from localhost: icmp_seq=1 ttl=64 time=0.04 ms<br>
+                  64 bytes from localhost: icmp_seq=2 ttl=64 time=0.03 ms<br>
+                  --- yeoni.ai ping statistics --- 2 packets transmitted, 0% packet loss
+                </p>
+                <p class="line cursor"><span class="prompt">guest@yeoni-core:~$</span> <span class="blink-cursor">_</span></p>
+              </div>
+
+              <!-- SNS 퀵 링크 -->
+              <div class="sns-container">
+                <a href="mailto:dusgn@naver.com" class="sns-btn" aria-label="이메일 보내기"><i class="fa-solid fa-envelope"></i></a>
+                <a href="https://github.com" target="_blank" class="sns-btn" aria-label="깃허브 이동"><i class="fa-brands fa-github"></i></a>
+                <a href="https://linkedin.com" target="_blank" class="sns-btn" aria-label="링크드인 이동"><i class="fa-brands fa-linkedin"></i></a>
+                <a href="#" class="sns-btn" aria-label="강의 문의"><i class="fa-solid fa-user-tie"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 오른쪽: 메시지 발송 콘솔 폼 -->
+          <div class="hud-card message-form-card">
+            <h3 class="form-title"><i class="fa-solid fa-paper-plane neon-cyan"></i> SEND TRANSMISSION</h3>
+            <form id="contact-form" class="hud-form" onsubmit="event.preventDefault(); alert('메시지 전송 시스템 시뮬레이션: 성공적으로 접수되었습니다!');">
+              <div class="form-group">
+                <label for="form-name">CALL_SIGN / 성함</label>
+                <input type="text" id="form-name" placeholder="성함 또는 기업명을 입력하세요" required>
+              </div>
+              <div class="form-group">
+                <label for="form-email">COMM_PORT / 회신 이메일</label>
+                <input type="email" id="form-email" placeholder="reply@example.com" required>
+              </div>
+              <div class="form-group">
+                <label for="form-subject">CHANNEL / 문의 유형</label>
+                <select id="form-subject">
+                  <option value="collaboration">협업 제안 (Collaboration)</option>
+                  <option value="lecture">강의 의뢰 (Lecture / Workshop)</option>
+                  <option value="research">연구 논의 (Research / Ph.D)</option>
+                  <option value="general">기타 문의 (General)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="form-message">TRANSMISSION_DATA / 상세 메시지</label>
+                <textarea id="form-message" rows="4" placeholder="프로젝트 제안, 강연 일정 등을 적어주십시오..." required></textarea>
+              </div>
+              <button type="submit" class="hud-btn primary submit-btn">
+                <span>INITIALIZE SECURE SEND</span> <i class="fa-solid fa-bolt"></i>
+              </button>
+            </form>
           </div>
         </div>
 
-        <!-- 3D 캔버스 -->
-        <div id="hero-canvas" class="hero-canvas"></div>
+        <!-- 푸터 -->
+        <footer class="terminal-footer">
+          <p>© 2026 YEONI_SYS. ALL RIGHTS RESERVED. INITIATED WITH HARMONY.</p>
+          <p>POWERED BY THREE.JS / GSAP / LENIS ENGINE</p>
+        </footer>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 통계 -->
-  <section style="padding-top: 0;">
-    <div class="container">
-      <div class="stats-band reveal">
-        <div class="stat">
-          <div class="stat-num"><span data-count="20" data-suffix="+">0</span></div>
-          <div class="stat-label">YEARS OF RESEARCH</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num"><span data-count="3200" data-suffix="+">0</span></div>
-          <div class="stat-label">코칭 누적 인원</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num"><span data-count="92" data-suffix="%">0</span></div>
-          <div class="stat-label">참여자 만족도</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num"><span data-count="42">0</span></div>
-          <div class="stat-label">전문 코치</div>
-        </div>
-      </div>
-    </div>
-  </section>
+  </main>
 
-  <!-- 4단계 방법론 -->
-  <section>
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">METHODOLOGY</span>
-        <h2>자기경영, 4단계로 완성됩니다.</h2>
-        <p class="lead">자기인식 → 비전 설계 → 일상 실행 → 회고의 순환 구조. 한 번의 코칭이 아닌, 평생 사용할 자기경영 시스템입니다.</p>
-      </div>
-
-      <div class="feature-grid">
-        <div class="glass-card feature-card reveal">
-          <div class="feature-card-num">01</div>
-          <div class="icon">🌱</div>
-          <h3>행복요소 진단</h3>
-          <p>사업·재정·건강·가족 등 12가지 행복요소를 우선순위·만족도·자신감 3차원으로 평가하여 현재의 나를 객관화합니다.</p>
-        </div>
-
-        <div class="glass-card feature-card reveal">
-          <div class="feature-card-num">02</div>
-          <div class="icon">🗺️</div>
-          <h3>꿈 전개도 설계</h3>
-          <p>Having / Doing / Being 세 영역으로 꿈을 분류하고, 10년 매트릭스에 배치하여 인생의 장기 비전을 시각화합니다.</p>
-        </div>
-
-        <div class="glass-card feature-card reveal">
-          <div class="feature-card-num">03</div>
-          <div class="icon">🎯</div>
-          <h3>6단계 목표 분해</h3>
-          <p>성취과제 → 성과목표 → 실행과제 → 실행목표 → 시작과제 → 시작목표로 분해하여, 큰 꿈을 오늘 할 수 있는 1cm 행동까지 좁힙니다.</p>
-        </div>
-
-        <div class="glass-card feature-card reveal">
-          <div class="feature-card-num">04</div>
-          <div class="icon">📓</div>
-          <h3>BYK 회고 시스템</h3>
-          <p>매일의 실행에 8단계 BYK 척도(감동~끔찍함)로 정서 만족도를 기록하여, 단순 완료가 아닌 충실한 경험을 추적합니다.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 미션 / 인용 -->
-  <section>
-    <div class="container">
-      <div class="glass-card reveal" style="padding: 60px; text-align: center; max-width: 880px; margin: 0 auto;">
-        <span class="eyebrow">OUR MISSION</span>
-        <h2 style="margin-top: 8px;">
-          "삶의 주인이 된다는 건, <br />
-          <span class="gradient-text">스스로 항해할 줄 안다는 것</span>입니다."
-        </h2>
-        <p class="lead" style="margin: 24px auto 0;">
-          우리는 누구나 자신만의 나침반을 가질 수 있다고 믿습니다.
-          YH NAVIGATOR는 20년간 축적된 코칭 방법론을 누구나 실천할 수 있는 시스템으로 만들어,
-          한 사람의 인생이 스스로의 결정과 회고를 통해 자라나도록 돕습니다.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 코치 매칭 CTA -->
-  <section>
-    <div class="container">
-      <div class="cta-band reveal">
-        <span class="eyebrow">START NOW</span>
-        <h2>나에게 맞는 코치를 만나보세요.</h2>
-        <p class="lead" style="margin: 0 auto 36px;">
-          단 3분의 진단으로, 당신의 목표·라이프 스타일·성장 단계에 맞는
-          전문 코치 3명을 추천해드립니다.
-        </p>
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <a href="matching.html" class="btn btn-primary">
-            무료 매칭 시작하기
-            <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M13 5l7 7-7 7" />
-            </svg>
-          </a>
-          <a href="coaches.html" class="btn btn-ghost">코치 전체 보기</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 푸터 -->
-  <footer>
-    <div class="container">
-      <div class="footer-grid">
-        <div>
-          <div class="nav-brand" style="margin-bottom: 16px;">
-            <span class="nav-brand-mark"></span>
-            <span>YH NAVIGATOR</span>
-          </div>
-          <p style="color: var(--text-dim); font-size: 14px; max-width: 320px;">
-            자기경영 워크북 기반 라이프 코칭 플랫폼.
-            인생의 항로를 스스로 설계하는 사람들을 위한 디지털 동반자.
-          </p>
-        </div>
-
-        <div>
-          <h4>제품</h4>
-          <ul>
-            <li><a href="methodology.html">방법론</a></li>
-            <li><a href="coaches.html">코치 소개</a></li>
-            <li><a href="matching.html">코치 매칭</a></li>
-            <li><a href="#">앱 다운로드</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4>회사</h4>
-          <ul>
-            <li><a href="#">소개</a></li>
-            <li><a href="#">연구소</a></li>
-            <li><a href="#">채용</a></li>
-            <li><a href="#">블로그</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4>지원</h4>
-          <ul>
-            <li><a href="#">고객센터</a></li>
-            <li><a href="#">자주 묻는 질문</a></li>
-            <li><a href="#">이용약관</a></li>
-            <li><a href="#">개인정보처리방침</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <span>© 2026 YH NAVIGATOR. All rights reserved.</span>
-        <span>Made with 💙 in Seoul</span>
-      </div>
-    </div>
-  </footer>
-
-  <script type="module" src="js/three-scene.js"></script>
-  <script src="js/main.js"></script>
+  <!-- CDN Scripts -->
+  <!-- Three.js (WebGL 3D Core Library) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- GSAP & ScrollTrigger (Animation Library) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  
+  <!-- Lenis (Smooth Scroll Library) -->
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+  
+  <!-- Custom Application Script -->
+  <script src="script.js"></script>
 </body>
 </html>
