@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>방법론 — YH NAVIGATOR</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem('yh-theme');
+      var theme = saved === 'dark' || saved === 'light' ? saved : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* 페이지 전용 스타일 */
+    .step-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 100px;
+    }
+    .step-block:nth-child(even) .step-visual { order: -1; }
+    @media (max-width: 900px) {
+      .step-block { grid-template-columns: 1fr; gap: 32px; }
+      .step-block:nth-child(even) .step-visual { order: 0; }
+    }
+
+    .step-tag {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      margin-bottom: 16px;
+      border: 1px solid rgba(58, 116, 226, 0.3);
+    }
+
+    .step-visual {
+      aspect-ratio: 1 / 1;
+      max-width: 460px;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      background: var(--bg-card-solid);
+      backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    /* 1단계 — 행복요소 레이더 */
+    .radar-svg { width: 100%; max-width: 360px; }
+    .radar-svg .axis { stroke: var(--border-strong); stroke-width: 1; }
+    .radar-svg .grid { stroke: var(--border); fill: none; stroke-width: 1; }
+    .radar-svg .shape {
+      fill: var(--accent-soft);
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+    .radar-svg .label {
+      font-size: 10px;
+      fill: var(--text-dim);
+      font-family: inherit;
+    }
+    .radar-svg .point { fill: var(--secondary); }
+
+    /* 2단계 — 꿈 매트릭스 */
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      width: 100%;
+      max-width: 360px;
+    }
+    .matrix-cell {
+      aspect-ratio: 1;
+      background: var(--cell-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      position: relative;
+    }
+    .matrix-cell.active {
+      background: var(--gradient-1);
+      box-shadow: 0 0 16px var(--accent-soft);
+      border-color: transparent;
+    }
+    .matrix-cell.purple {
+      background: var(--secondary);
+      box-shadow: 0 0 16px rgba(124, 58, 237, 0.4);
+      border-color: transparent;
+    }
+    .matrix-cell.teal {
+      background: var(--tertiary);
+      box-shadow: 0 0 16px rgba(8, 145, 178, 0.4);
+      border-color: transparent;
+    }
+
+    /* 3단계 — 6단계 분해 */
+    .decomp-list {
+      width: 100%;
+      max-width: 320px;
+    }
+    .decomp-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      border-radius: 10px;
+      background: var(--cell-bg);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      animation: slideIn 0.6s ease both;
+    }
+    .decomp-row:nth-child(1) { animation-delay: 0s; padding-left: 14px; }
+    .decomp-row:nth-child(2) { animation-delay: 0.1s; margin-left: 12px; }
+    .decomp-row:nth-child(3) { animation-delay: 0.2s; margin-left: 24px; }
+    .decomp-row:nth-child(4) { animation-delay: 0.3s; margin-left: 36px; }
+    .decomp-row:nth-child(5) { animation-delay: 0.4s; margin-left: 48px; }
+    .decomp-row:nth-child(6) { animation-delay: 0.5s; margin-left: 60px; background: var(--accent-soft); border-color: var(--accent); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .decomp-row-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* 4단계 — BYK 척도 */
+    .byk-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .byk-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--cell-bg);
+      border: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .byk-emoji { font-size: 18px; }
+    .byk-label { flex: 1; }
+    .byk-bar {
+      width: 60px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .byk-bar > span {
+      display: block;
+      height: 100%;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 네비게이션 -->
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-mark"></span>
+      <span>YH NAVIGATOR</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">홈</a></li>
+      <li><a href="methodology.html" class="active">방법론</a></li>
+      <li><a href="coaches.html">코치 소개</a></li>
+      <li><a href="matching.html">코치 매칭</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="테마 전환">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a href="matching.html" class="nav-cta">무료 매칭 받기</a>
+    </div>
+  </nav>
+
+  <!-- 페이지 헤더 -->
+  <section class="page-header">
+    <div class="container">
+      <span class="eyebrow">METHODOLOGY</span>
+      <h1>자기경영을 <span class="gradient-text">시스템</span>으로.</h1>
+      <p class="lead" style="margin: 24px auto 0;">
+        20년 코칭 연구와 임상으로 정립한 4단계 자기경영 방법론을 소개합니다.
+        한 번의 워크숍이 아닌, 평생 사용할 운영체제를 설치하는 과정입니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- 4단계 상세 -->
+  <section>
+    <div class="container">
+
+      <!-- 1단계: 행복요소 진단 -->
+      <div class="step-block reveal">
+        <div>
+          <span class="step-tag">STEP 01 · 자기인식</span>
+          <h2>행복요소 진단</h2>
+          <p class="lead">
+            사업·경력·재정·건강·명예·영성·가족·친구·여유·계발·여행·환경.
+            12가지 행복요소를 <strong style="color:var(--text);">우선순위 / 만족도 / 자신감</strong> 3차원으로 평가합니다.
+          </p>
+          <ul style="list-style: none; margin-top: 24px;">
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">6~8개 선택</strong> — 나에게 의미있는 요소만
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">드래그로 순위</strong> — 진짜 중요한 게 무엇인가
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">10점 척도 만족도</strong> — 지금 어디 서있는가
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim);">
+              <strong style="color: var(--text);">자신감 점수</strong> — 변화할 수 있다는 확신
+            </li>
+          </ul>
+        </div>
+        <div class="step-visual">
+          <svg class="radar-svg" viewBox="-180 -180 360 360">
+            <!-- grid -->
+            <polygon class="grid" points="0,-150 130,-75 130,75 0,150 -130,75 -130,-75" />
+            <polygon class="grid" points="0,-100 87,-50 87,50 0,100 -87,50 -87,-50" />
+            <polygon class="grid" points="0,-50 43,-25 43,25 0,50 -43,25 -43,-25" />
+            <!-- axes -->
+            <line class="axis" x1="0" y1="0" x2="0" y2="-150" />
+            <line class="axis" x1="0" y1="0" x2="130" y2="-75" />
+            <line class="axis" x1="0" y1="0" x2="130" y2="75" />
+            <line class="axis" x1="0" y1="0" x2="0" y2="150" />
+            <line class="axis" x1="0" y1="0" x2="-130" y2="75" />
+            <line class="axis" x1="0" y1="0" x2="-130" y2="-75" />
+            <!-- data shape -->
+            <polygon class="shape" points="0,-120 100,-58 90,52 0,90 -110,63 -100,-58" />
+            <!-- points -->
+            <circle class="point" cx="0" cy="-120" r="4" />
+            <circle class="point" cx="100" cy="-58" r="4" />
+            <circle class="point" cx="90" cy="52" r="4" />
+            <circle class="point" cx="0" cy="90" r="4" />
+            <circle class="point" cx="-110" cy="63" r="4" />
+            <circle class="point" cx="-100" cy="-58" r="4" />
+            <!-- labels -->
+            <text class="label" x="0" y="-160" text-anchor="middle">재정</text>
+            <text class="label" x="145" y="-78" text-anchor="middle">건강</text>
+            <text class="label" x="145" y="82" text-anchor="middle">가족</text>
+            <text class="label" x="0" y="170" text-anchor="middle">계발</text>
+            <text class="label" x="-145" y="82" text-anchor="middle">여유</text>
+            <text class="label" x="-145" y="-78" text-anchor="middle">명예</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 2단계: 꿈 전개도 -->
+      <div class="step-block reveal">
+        <div>
+          <span class="step-tag">STEP 02 · 비전 설계</span>
+          <h2>꿈 전개도</h2>
+          <p class="lead">
+            꿈을 <strong style="color: var(--text);">Having(갖고 싶은 것) · Doing(하고 싶은 일) · Being(되고 싶은 모습)</strong> 세 영역으로 분류하고,
+            각 행복요소에 10년 단위 매트릭스에 배치합니다.
+          </p>
+          <ul style="list-style: none; margin-top: 24px;">
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">중요도 A · B · C</strong> — 반드시 / 가능하다면 / 있으면 좋은
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">달성희망기한</strong> — 0.1 / 1년 / 3년 / 5년 / 10년
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim);">
+              <strong style="color: var(--text);">핵심단어 축약</strong> — 비전을 한 단어로 압축
+            </li>
+          </ul>
+        </div>
+        <div class="step-visual">
+          <div class="matrix">
+            <div class="matrix-cell active"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell active"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell purple"></div>
+
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell purple"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell teal"></div>
+            <div class="matrix-cell"></div>
+
+            <div class="matrix-cell teal"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell active"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell active"></div>
+
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell active"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell purple"></div>
+            <div class="matrix-cell"></div>
+
+            <div class="matrix-cell purple"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell teal"></div>
+            <div class="matrix-cell"></div>
+            <div class="matrix-cell active"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3단계: 6단계 분해 -->
+      <div class="step-block reveal">
+        <div>
+          <span class="step-tag">STEP 03 · 실행 설계</span>
+          <h2>6단계 목표 분해</h2>
+          <p class="lead">
+            "10년 후 영어 능통자가 된다"는 큰 꿈을 오늘 할 수 있는 1cm 행동까지 좁힙니다.
+            큰 비전과 작은 실행 사이의 거리를 6단계로 메웁니다.
+          </p>
+          <ul style="list-style: none; margin-top: 24px;">
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">단계가 깊어질수록 구체적</strong> — 추상 → 측정 가능
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim);">
+              <strong style="color: var(--text);">마지막은 "오늘 할 수 있는 한 가지"</strong> — 시작목표
+            </li>
+          </ul>
+        </div>
+        <div class="step-visual">
+          <div class="decomp-list">
+            <div class="decomp-row"><span class="decomp-row-num">1</span><span>성취과제 — 영어 능통자</span></div>
+            <div class="decomp-row"><span class="decomp-row-num">2</span><span>성과목표 — 토익 950</span></div>
+            <div class="decomp-row"><span class="decomp-row-num">3</span><span>실행과제 — 매일 영자신문 정독</span></div>
+            <div class="decomp-row"><span class="decomp-row-num">4</span><span>실행목표 — 주 5회 30분</span></div>
+            <div class="decomp-row"><span class="decomp-row-num">5</span><span>시작과제 — 구독 신청하기</span></div>
+            <div class="decomp-row"><span class="decomp-row-num">6</span><span>시작목표 — 오늘 저녁 8시</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4단계: BYK 척도 -->
+      <div class="step-block reveal">
+        <div>
+          <span class="step-tag">STEP 04 · 회고</span>
+          <h2>BYK 만족도 척도</h2>
+          <p class="lead">
+            매일의 실행에 단순 완료/미완료가 아닌, <strong style="color: var(--text);">8단계 주관적 경험 척도</strong>로 정서를 기록합니다.
+            "했다"가 아니라 "어떻게 느꼈는가"가 진짜 데이터입니다.
+          </p>
+          <ul style="list-style: none; margin-top: 24px;">
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">감동 / 기쁨 / 만족 / 안도</strong> — 긍정 4단계
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim); border-bottom: 1px solid var(--border);">
+              <strong style="color: var(--text);">보통</strong> — 중립
+            </li>
+            <li style="padding: 10px 0; color: var(--text-dim);">
+              <strong style="color: var(--text);">불만 / 슬픔 / 끔찍함</strong> — 부정 3단계 + 회피 대안 탐색
+            </li>
+          </ul>
+        </div>
+        <div class="step-visual">
+          <div class="byk-scale">
+            <div class="byk-row"><span class="byk-emoji">🌟</span><span class="byk-label">감동</span><span class="byk-bar"><span style="width:100%; background:#FF5C7C;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">😊</span><span class="byk-label">기쁨</span><span class="byk-bar"><span style="width:88%; background:#FF7B9A;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">👍</span><span class="byk-label">만족</span><span class="byk-bar"><span style="width:75%; background:#3A74E2;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">✅</span><span class="byk-label">안도</span><span class="byk-bar"><span style="width:62%; background:#5C8FF0;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">⚪</span><span class="byk-label">보통</span><span class="byk-bar"><span style="width:50%; background:#888;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">👎</span><span class="byk-label">불만</span><span class="byk-bar"><span style="width:38%; background:#666;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">😢</span><span class="byk-label">슬픔</span><span class="byk-bar"><span style="width:24%; background:#555;"></span></span></div>
+            <div class="byk-row"><span class="byk-emoji">⚠️</span><span class="byk-label">끔찍함</span><span class="byk-bar"><span style="width:12%; background:#444;"></span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section>
+    <div class="container">
+      <div class="cta-band reveal">
+        <span class="eyebrow">READY?</span>
+        <h2>이 방법론을 함께할 코치를 찾아보세요.</h2>
+        <p class="lead" style="margin: 0 auto 36px;">
+          방법론은 도구일 뿐. 진짜 변화는 함께하는 사람과 일어납니다.
+        </p>
+        <a href="matching.html" class="btn btn-primary">
+          코치 매칭 받기
+          <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="nav-brand" style="margin-bottom: 16px;">
+            <span class="nav-brand-mark"></span>
+            <span>YH NAVIGATOR</span>
+          </div>
+          <p style="color: var(--text-dim); font-size: 14px; max-width: 320px;">
+            자기경영 워크북 기반 라이프 코칭 플랫폼.
+          </p>
+        </div>
+        <div><h4>제품</h4><ul><li><a href="methodology.html">방법론</a></li><li><a href="coaches.html">코치 소개</a></li><li><a href="matching.html">코치 매칭</a></li></ul></div>
+        <div><h4>회사</h4><ul><li><a href="#">소개</a></li><li><a href="#">연구소</a></li><li><a href="#">채용</a></li></ul></div>
+        <div><h4>지원</h4><ul><li><a href="#">고객센터</a></li><li><a href="#">FAQ</a></li><li><a href="#">이용약관</a></li></ul></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 YH NAVIGATOR. All rights reserved.</span>
+        <span>Made with 💙 in Seoul</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

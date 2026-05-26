@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>코치 매칭 — YH NAVIGATOR</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem('yh-theme');
+      var theme = saved === 'dark' || saved === 'light' ? saved : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .matching-shell {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 40px;
+      overflow: hidden;
+    }
+
+    .progress-bar > span {
+      display: block;
+      height: 100%;
+      background: var(--gradient-1);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+      width: 20%;
+    }
+
+    .step {
+      display: none;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .step.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-num {
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .step-question {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 36px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .option {
+      padding: 22px 24px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card-solid);
+      backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-family: inherit;
+      color: var(--text);
+      font-size: 15px;
+      position: relative;
+      box-shadow: var(--shadow-card);
+    }
+
+    .option:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    .option.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 1px var(--accent), var(--shadow-glow);
+    }
+
+    .option-emoji {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .option-label {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .option-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .step-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .text-button {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 10px 16px;
+    }
+
+    .text-button:hover { color: var(--text); }
+
+    .btn-next:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* 결과 화면 */
+    #result {
+      display: none;
+    }
+
+    .result-hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .result-coach-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .result-coach {
+      padding: 28px;
+      position: relative;
+    }
+
+    .match-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: var(--gradient-1);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .match-meter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .match-meter-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .match-meter-bar > span {
+      display: block;
+      height: 100%;
+      background: var(--gradient-1);
+      border-radius: 3px;
+    }
+
+    .match-meter-score {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .result-coach .coach-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: white;
+      position: relative;
+    }
+
+    .result-coach .coach-avatar::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      padding: 2px;
+      background: var(--gradient-1);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 네비게이션 -->
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-mark"></span>
+      <span>YH NAVIGATOR</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">홈</a></li>
+      <li><a href="methodology.html">방법론</a></li>
+      <li><a href="coaches.html">코치 소개</a></li>
+      <li><a href="matching.html" class="active">코치 매칭</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="테마 전환">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a href="matching.html" class="nav-cta">무료 매칭 받기</a>
+    </div>
+  </nav>
+
+  <section style="padding-top: 140px;">
+    <div class="container">
+      <div class="matching-shell">
+
+        <!-- 진행도 -->
+        <div id="quiz-wrap">
+          <div class="progress-bar"><span id="progress"></span></div>
+
+          <!-- Q1 -->
+          <div class="step active" data-step="1">
+            <div class="step-num">QUESTION 01 / 05</div>
+            <h2 class="step-question">지금 가장 집중하고 싶은 영역은 무엇인가요?</h2>
+            <div class="options">
+              <button class="option" data-tag="career">
+                <span class="option-emoji">💼</span>
+                <span class="option-label">커리어 / 전직</span>
+                <span class="option-desc">진로 전환, 이직, 경력 설계</span>
+              </button>
+              <button class="option" data-tag="entrepreneur">
+                <span class="option-emoji">🚀</span>
+                <span class="option-label">창업 / 사업</span>
+                <span class="option-desc">비즈니스 모델, 실행 설계</span>
+              </button>
+              <button class="option" data-tag="life">
+                <span class="option-emoji">⚖️</span>
+                <span class="option-label">라이프 밸런스</span>
+                <span class="option-desc">번아웃, 워라밸, 회복</span>
+              </button>
+              <button class="option" data-tag="finance">
+                <span class="option-emoji">💰</span>
+                <span class="option-label">재정 / 자산</span>
+                <span class="option-desc">자산 설계, 재정 운용</span>
+              </button>
+              <button class="option" data-tag="relation">
+                <span class="option-emoji">🤝</span>
+                <span class="option-label">관계 / 가족</span>
+                <span class="option-desc">가족, 친구, 동료와의 관계</span>
+              </button>
+              <button class="option" data-tag="growth">
+                <span class="option-emoji">📚</span>
+                <span class="option-label">자기성장 / 학습</span>
+                <span class="option-desc">습관, 학습, 평생성장</span>
+              </button>
+            </div>
+            <div class="step-actions">
+              <span></span>
+              <button class="btn btn-primary btn-next" disabled>다음 →</button>
+            </div>
+          </div>
+
+          <!-- Q2 -->
+          <div class="step" data-step="2">
+            <div class="step-num">QUESTION 02 / 05</div>
+            <h2 class="step-question">지금 어떤 상황에 가장 가까운가요?</h2>
+            <div class="options">
+              <button class="option" data-tag="stage-start">
+                <span class="option-emoji">🌱</span>
+                <span class="option-label">막 시작하려는 단계</span>
+                <span class="option-desc">방향을 정하고 첫걸음을 내딛고 싶어요</span>
+              </button>
+              <button class="option" data-tag="stage-progress">
+                <span class="option-emoji">🛤️</span>
+                <span class="option-label">진행 중인데 막혔어요</span>
+                <span class="option-desc">계획은 있는데 실행이 어려워요</span>
+              </button>
+              <button class="option" data-tag="stage-transition">
+                <span class="option-emoji">🔁</span>
+                <span class="option-label">전환을 고민 중</span>
+                <span class="option-desc">현재를 떠나 다음 단계로 가고 싶어요</span>
+              </button>
+              <button class="option" data-tag="stage-optimize">
+                <span class="option-emoji">📈</span>
+                <span class="option-label">잘 하고 있지만 더 잘하고 싶어요</span>
+                <span class="option-desc">시스템화·최적화가 필요한 단계</span>
+              </button>
+            </div>
+            <div class="step-actions">
+              <button class="text-button btn-prev">← 이전</button>
+              <button class="btn btn-primary btn-next" disabled>다음 →</button>
+            </div>
+          </div>
+
+          <!-- Q3 -->
+          <div class="step" data-step="3">
+            <div class="step-num">QUESTION 03 / 05</div>
+            <h2 class="step-question">어떤 코칭 스타일을 선호하시나요?</h2>
+            <div class="options">
+              <button class="option" data-tag="style-structured">
+                <span class="option-emoji">📐</span>
+                <span class="option-label">구조적 · 체계적</span>
+                <span class="option-desc">명확한 프레임과 단계 설계</span>
+              </button>
+              <button class="option" data-tag="style-empathic">
+                <span class="option-emoji">💗</span>
+                <span class="option-label">공감적 · 정서적</span>
+                <span class="option-desc">마음을 먼저 들여다보고 출발</span>
+              </button>
+              <button class="option" data-tag="style-action">
+                <span class="option-emoji">⚡</span>
+                <span class="option-label">실행 중심 · 직설적</span>
+                <span class="option-desc">바로 행동하고 결과 만들기</span>
+              </button>
+              <button class="option" data-tag="style-reflective">
+                <span class="option-emoji">🪞</span>
+                <span class="option-label">질문 중심 · 회고적</span>
+                <span class="option-desc">스스로 답을 찾도록 묻기</span>
+              </button>
+            </div>
+            <div class="step-actions">
+              <button class="text-button btn-prev">← 이전</button>
+              <button class="btn btn-primary btn-next" disabled>다음 →</button>
+            </div>
+          </div>
+
+          <!-- Q4 -->
+          <div class="step" data-step="4">
+            <div class="step-num">QUESTION 04 / 05</div>
+            <h2 class="step-question">매주 코칭에 투자할 수 있는 시간은?</h2>
+            <div class="options">
+              <button class="option" data-tag="time-light">
+                <span class="option-emoji">🕐</span>
+                <span class="option-label">주 1시간 미만</span>
+                <span class="option-desc">가볍게 시작하고 싶어요</span>
+              </button>
+              <button class="option" data-tag="time-regular">
+                <span class="option-emoji">🕒</span>
+                <span class="option-label">주 1~2시간</span>
+                <span class="option-desc">꾸준한 페이스를 원해요</span>
+              </button>
+              <button class="option" data-tag="time-intensive">
+                <span class="option-emoji">🕔</span>
+                <span class="option-label">주 3시간 이상</span>
+                <span class="option-desc">집중적으로 변화하고 싶어요</span>
+              </button>
+            </div>
+            <div class="step-actions">
+              <button class="text-button btn-prev">← 이전</button>
+              <button class="btn btn-primary btn-next" disabled>다음 →</button>
+            </div>
+          </div>
+
+          <!-- Q5 -->
+          <div class="step" data-step="5">
+            <div class="step-num">QUESTION 05 / 05</div>
+            <h2 class="step-question">코치에게 가장 기대하는 가치는?</h2>
+            <div class="options">
+              <button class="option" data-tag="value-clarity">
+                <span class="option-emoji">💡</span>
+                <span class="option-label">명확함</span>
+                <span class="option-desc">흐릿한 생각을 정리해주기</span>
+              </button>
+              <button class="option" data-tag="value-accountability">
+                <span class="option-emoji">🎯</span>
+                <span class="option-label">책임감</span>
+                <span class="option-desc">실행을 끝까지 점검해주기</span>
+              </button>
+              <button class="option" data-tag="value-wisdom">
+                <span class="option-emoji">🧭</span>
+                <span class="option-label">통찰</span>
+                <span class="option-desc">경험에서 우러난 인사이트</span>
+              </button>
+              <button class="option" data-tag="value-warmth">
+                <span class="option-emoji">🤗</span>
+                <span class="option-label">따뜻함</span>
+                <span class="option-desc">힘들 때 곁이 되어주기</span>
+              </button>
+            </div>
+            <div class="step-actions">
+              <button class="text-button btn-prev">← 이전</button>
+              <button class="btn btn-primary btn-next">결과 확인 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 결과 -->
+        <div id="result">
+          <div class="result-hero">
+            <span class="eyebrow">YOUR MATCH</span>
+            <h1 style="margin-top: 12px;">
+              당신과 가장 잘 맞는<br />
+              <span class="gradient-text">3명의 코치</span>를 찾았어요.
+            </h1>
+            <p class="lead" style="margin: 20px auto 0;">
+              답변하신 5가지 기준과 코치의 전문 영역·스타일·시간 패턴을 매칭한 결과입니다.
+            </p>
+          </div>
+
+          <div class="result-coach-grid">
+            <div class="glass-card result-coach">
+              <div class="match-badge">98% MATCH</div>
+              <div class="coach-avatar" style="background: linear-gradient(135deg, #3A74E2, #B388FF);">박</div>
+              <h3>박서연 코치</h3>
+              <p style="font-size: 13px; color: var(--accent); margin-bottom: 12px; font-weight: 600;">라이프 밸런스 전문</p>
+              <div class="match-meter">
+                <div class="match-meter-bar"><span style="width: 98%;"></span></div>
+                <span class="match-meter-score">98</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">번아웃 회복과 워라밸 설계 전문. 임상심리 석사 출신으로 정서·관계·업무의 균형을 함께 설계합니다.</p>
+              <a href="#" class="btn btn-ghost" style="margin-top: 20px; width: 100%; justify-content: center;">상담 신청</a>
+            </div>
+
+            <div class="glass-card result-coach">
+              <div class="match-badge">91% MATCH</div>
+              <div class="coach-avatar" style="background: linear-gradient(135deg, #00D9C0, #3A74E2);">윤</div>
+              <h3>윤도현 코치</h3>
+              <p style="font-size: 13px; color: var(--accent); margin-bottom: 12px; font-weight: 600;">자기성장 / 학습 전문</p>
+              <div class="match-meter">
+                <div class="match-meter-bar"><span style="width: 91%;"></span></div>
+                <span class="match-meter-score">91</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">교육공학 박사. 평생학습 설계, 습관 형성, 자기주도 학습 시스템 구축을 돕습니다.</p>
+              <a href="#" class="btn btn-ghost" style="margin-top: 20px; width: 100%; justify-content: center;">상담 신청</a>
+            </div>
+
+            <div class="glass-card result-coach">
+              <div class="match-badge">87% MATCH</div>
+              <div class="coach-avatar" style="background: linear-gradient(135deg, #B388FF, #FF7B9A);">강</div>
+              <h3>강민서 코치</h3>
+              <p style="font-size: 13px; color: var(--accent); margin-bottom: 12px; font-weight: 600;">커리어 / 전직 전문</p>
+              <div class="match-meter">
+                <div class="match-meter-bar"><span style="width: 87%;"></span></div>
+                <span class="match-meter-score">87</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">대기업 HR 14년. 30·40대 전직과 경력 전환을 전문으로, 누적 480명의 커리어 코칭 경험.</p>
+              <a href="#" class="btn btn-ghost" style="margin-top: 20px; width: 100%; justify-content: center;">상담 신청</a>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 60px;">
+            <button id="retake" class="btn btn-ghost">다시 매칭하기</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="nav-brand" style="margin-bottom: 16px;">
+            <span class="nav-brand-mark"></span>
+            <span>YH NAVIGATOR</span>
+          </div>
+          <p style="color: var(--text-dim); font-size: 14px; max-width: 320px;">
+            자기경영 워크북 기반 라이프 코칭 플랫폼.
+          </p>
+        </div>
+        <div><h4>제품</h4><ul><li><a href="methodology.html">방법론</a></li><li><a href="coaches.html">코치 소개</a></li><li><a href="matching.html">코치 매칭</a></li></ul></div>
+        <div><h4>회사</h4><ul><li><a href="#">소개</a></li><li><a href="#">연구소</a></li><li><a href="#">채용</a></li></ul></div>
+        <div><h4>지원</h4><ul><li><a href="#">고객센터</a></li><li><a href="#">FAQ</a></li><li><a href="#">이용약관</a></li></ul></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 YH NAVIGATOR. All rights reserved.</span>
+        <span>Made with 💙 in Seoul</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // 매칭 퀴즈
+    const steps = document.querySelectorAll('.step');
+    const progress = document.getElementById('progress');
+    const TOTAL = steps.length;
+    let current = 1;
+    const answers = {};
+
+    function showStep(n) {
+      steps.forEach((s) => s.classList.remove('active'));
+      const step = document.querySelector(`.step[data-step="${n}"]`);
+      if (step) step.classList.add('active');
+      progress.style.width = `${(n / TOTAL) * 100}%`;
+      current = n;
+    }
+
+    document.querySelectorAll('.step').forEach((step) => {
+      const opts = step.querySelectorAll('.option');
+      const nextBtn = step.querySelector('.btn-next');
+      const prevBtn = step.querySelector('.btn-prev');
+
+      opts.forEach((opt) => {
+        opt.addEventListener('click', () => {
+          opts.forEach((o) => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          answers[step.dataset.step] = opt.dataset.tag;
+          nextBtn.disabled = false;
+        });
+      });
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          const stepNum = parseInt(step.dataset.step, 10);
+          if (stepNum < TOTAL) {
+            showStep(stepNum + 1);
+          } else {
+            // 마지막 → 결과 표시
+            document.getElementById('quiz-wrap').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+      }
+
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          const stepNum = parseInt(step.dataset.step, 10);
+          if (stepNum > 1) showStep(stepNum - 1);
+        });
+      }
+    });
+
+    document.getElementById('retake').addEventListener('click', () => {
+      document.getElementById('quiz-wrap').style.display = 'block';
+      document.getElementById('result').style.display = 'none';
+      showStep(1);
+      document.querySelectorAll('.option.selected').forEach((o) => o.classList.remove('selected'));
+      document.querySelectorAll('.btn-next').forEach((b, i) => {
+        if (i < TOTAL - 1) b.disabled = true;
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // 초기 진행도
+    showStep(1);
+  </script>
+</body>
+</html>

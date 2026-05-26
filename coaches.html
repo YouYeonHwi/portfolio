@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>코치 소개 — YH NAVIGATOR</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem('yh-theme');
+      var theme = saved === 'dark' || saved === 'light' ? saved : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .coach-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .coach-card {
+      position: relative;
+      padding: 32px;
+      cursor: pointer;
+    }
+
+    .coach-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .coach-avatar::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      padding: 2px;
+      background: var(--gradient-1);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+
+    .coach-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .coach-role {
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .coach-bio {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .coach-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .coach-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--cell-bg);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .coach-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .coach-meta b {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* 필터 바 */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+      justify-content: center;
+    }
+
+    .filter-chip {
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(20px);
+    }
+
+    .filter-chip:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .filter-chip.active {
+      background: var(--gradient-1);
+      color: white;
+      border-color: transparent;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 네비게이션 -->
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-mark"></span>
+      <span>YH NAVIGATOR</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">홈</a></li>
+      <li><a href="methodology.html">방법론</a></li>
+      <li><a href="coaches.html" class="active">코치 소개</a></li>
+      <li><a href="matching.html">코치 매칭</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="테마 전환">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a href="matching.html" class="nav-cta">무료 매칭 받기</a>
+    </div>
+  </nav>
+
+  <!-- 페이지 헤더 -->
+  <section class="page-header">
+    <div class="container">
+      <span class="eyebrow">OUR COACHES</span>
+      <h1>당신의 항해를 <span class="gradient-text">함께할 동반자</span>.</h1>
+      <p class="lead" style="margin: 24px auto 0;">
+        평균 12년 경력의 전문 코치 42명이 활동 중입니다.
+        각자의 영역과 스타일이 다르기에, 매칭을 통해 가장 적합한 코치를 만날 수 있습니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- 필터 -->
+  <section style="padding-top: 0;">
+    <div class="container">
+      <div class="filter-bar reveal">
+        <button class="filter-chip active" data-filter="all">전체</button>
+        <button class="filter-chip" data-filter="career">커리어 / 전직</button>
+        <button class="filter-chip" data-filter="entrepreneur">창업 / 사업</button>
+        <button class="filter-chip" data-filter="life">라이프 밸런스</button>
+        <button class="filter-chip" data-filter="finance">재정 / 자산</button>
+        <button class="filter-chip" data-filter="relation">관계 / 가족</button>
+        <button class="filter-chip" data-filter="growth">자기성장 / 학습</button>
+      </div>
+
+      <!-- 코치 카드 그리드 -->
+      <div class="coach-grid">
+        <!-- 코치 1 -->
+        <div class="glass-card coach-card reveal" data-tag="career">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #3A74E2, #B388FF);">강</div>
+          <div class="coach-name">강민서 코치</div>
+          <div class="coach-role">커리어 / 전직 전문</div>
+          <p class="coach-bio">대기업 HR 14년 경력. 30·40대 전직과 경력 전환을 전문으로, 누적 480명의 커리어 코칭 경험을 보유하고 있습니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#커리어</span>
+            <span class="coach-tag">#전직</span>
+            <span class="coach-tag">#리더십</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>14년</b></span>
+            <span>코칭 <b>480회</b></span>
+            <span>평점 <b>4.9</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 2 -->
+        <div class="glass-card coach-card reveal" data-tag="entrepreneur">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #00D9C0, #3A74E2);">이</div>
+          <div class="coach-name">이지원 코치</div>
+          <div class="coach-role">창업 / 사업 전문</div>
+          <p class="coach-bio">스타트업 2회 창업, 1회 EXIT 경험. 0→1 단계 창업가들의 비즈니스 모델링과 실행 설계를 돕습니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#창업</span>
+            <span class="coach-tag">#사업모델</span>
+            <span class="coach-tag">#실행</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>11년</b></span>
+            <span>코칭 <b>320회</b></span>
+            <span>평점 <b>4.8</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 3 -->
+        <div class="glass-card coach-card reveal" data-tag="life">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #B388FF, #FF7B9A);">박</div>
+          <div class="coach-name">박서연 코치</div>
+          <div class="coach-role">라이프 밸런스 전문</div>
+          <p class="coach-bio">번아웃 회복과 워라밸 설계 전문. 임상심리 석사 출신으로 정서·관계·업무의 균형을 함께 설계합니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#번아웃</span>
+            <span class="coach-tag">#워라밸</span>
+            <span class="coach-tag">#정서</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>9년</b></span>
+            <span>코칭 <b>410회</b></span>
+            <span>평점 <b>5.0</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 4 -->
+        <div class="glass-card coach-card reveal" data-tag="finance">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #FFB75A, #FF7B9A);">정</div>
+          <div class="coach-name">정현우 코치</div>
+          <div class="coach-role">재정 / 자산 설계 전문</div>
+          <p class="coach-bio">전 증권사 PB 출신. 단순 재테크가 아닌 '꿈을 위한 재정 설계'를 함께합니다. CFP 자격 보유.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#재정</span>
+            <span class="coach-tag">#자산</span>
+            <span class="coach-tag">#은퇴설계</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>16년</b></span>
+            <span>코칭 <b>290회</b></span>
+            <span>평점 <b>4.9</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 5 -->
+        <div class="glass-card coach-card reveal" data-tag="relation">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #FF7B9A, #B388FF);">최</div>
+          <div class="coach-name">최유진 코치</div>
+          <div class="coach-role">관계 / 가족 전문</div>
+          <p class="coach-bio">가족 상담 12년. 부부 갈등, 자녀와의 관계, 부모와의 거리감 등 관계 영역의 자기경영을 다룹니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#가족</span>
+            <span class="coach-tag">#관계</span>
+            <span class="coach-tag">#소통</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>12년</b></span>
+            <span>코칭 <b>380회</b></span>
+            <span>평점 <b>4.9</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 6 -->
+        <div class="glass-card coach-card reveal" data-tag="growth">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #00D9C0, #B388FF);">윤</div>
+          <div class="coach-name">윤도현 코치</div>
+          <div class="coach-role">자기성장 / 학습 전문</div>
+          <p class="coach-bio">교육공학 박사. 평생학습 설계, 습관 형성, 자기주도 학습 시스템 구축을 돕습니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#학습</span>
+            <span class="coach-tag">#습관</span>
+            <span class="coach-tag">#성장</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>13년</b></span>
+            <span>코칭 <b>520회</b></span>
+            <span>평점 <b>4.9</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 7 -->
+        <div class="glass-card coach-card reveal" data-tag="career">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #3A74E2, #00D9C0);">한</div>
+          <div class="coach-name">한지수 코치</div>
+          <div class="coach-role">시니어 임원 전문</div>
+          <p class="coach-bio">대기업 임원·C레벨 대상 코칭 전문. 리더십, 의사결정, 권한위임의 자기경영을 다룹니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#임원</span>
+            <span class="coach-tag">#리더십</span>
+            <span class="coach-tag">#의사결정</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>19년</b></span>
+            <span>코칭 <b>240회</b></span>
+            <span>평점 <b>5.0</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 8 -->
+        <div class="glass-card coach-card reveal" data-tag="growth">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #B388FF, #3A74E2);">서</div>
+          <div class="coach-name">서태웅 코치</div>
+          <div class="coach-role">크리에이터 / 1인 기업 전문</div>
+          <p class="coach-bio">유튜브·뉴스레터·온라인 클래스 운영자. 콘텐츠 크리에이터의 자기경영과 지속가능성을 함께합니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#크리에이터</span>
+            <span class="coach-tag">#1인기업</span>
+            <span class="coach-tag">#콘텐츠</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>8년</b></span>
+            <span>코칭 <b>180회</b></span>
+            <span>평점 <b>4.8</b></span>
+          </div>
+        </div>
+
+        <!-- 코치 9 -->
+        <div class="glass-card coach-card reveal" data-tag="life">
+          <div class="coach-avatar" style="background: linear-gradient(135deg, #00D9C0, #FFB75A);">조</div>
+          <div class="coach-name">조혜린 코치</div>
+          <div class="coach-role">건강 / 신체경영 전문</div>
+          <p class="coach-bio">스포츠 심리학·운동처방 자격 보유. 운동·식단·수면 루틴의 자기경영 시스템을 설계합니다.</p>
+          <div class="coach-tags">
+            <span class="coach-tag">#건강</span>
+            <span class="coach-tag">#루틴</span>
+            <span class="coach-tag">#회복</span>
+          </div>
+          <div class="coach-meta">
+            <span>경력 <b>10년</b></span>
+            <span>코칭 <b>350회</b></span>
+            <span>평점 <b>4.9</b></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 더보기 -->
+      <div style="text-align: center; margin-top: 60px;">
+        <p class="lead" style="margin: 0 auto 24px;">42명의 전문 코치 중 9명을 만나봤어요.</p>
+        <a href="matching.html" class="btn btn-primary">
+          나에게 맞는 코치 추천 받기
+          <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="nav-brand" style="margin-bottom: 16px;">
+            <span class="nav-brand-mark"></span>
+            <span>YH NAVIGATOR</span>
+          </div>
+          <p style="color: var(--text-dim); font-size: 14px; max-width: 320px;">
+            자기경영 워크북 기반 라이프 코칭 플랫폼.
+          </p>
+        </div>
+        <div><h4>제품</h4><ul><li><a href="methodology.html">방법론</a></li><li><a href="coaches.html">코치 소개</a></li><li><a href="matching.html">코치 매칭</a></li></ul></div>
+        <div><h4>회사</h4><ul><li><a href="#">소개</a></li><li><a href="#">연구소</a></li><li><a href="#">채용</a></li></ul></div>
+        <div><h4>지원</h4><ul><li><a href="#">고객센터</a></li><li><a href="#">FAQ</a></li><li><a href="#">이용약관</a></li></ul></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 YH NAVIGATOR. All rights reserved.</span>
+        <span>Made with 💙 in Seoul</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // 필터링
+    const chips = document.querySelectorAll('.filter-chip');
+    const cards = document.querySelectorAll('.coach-card');
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        chips.forEach((c) => c.classList.remove('active'));
+        chip.classList.add('active');
+        const filter = chip.dataset.filter;
+        cards.forEach((card) => {
+          if (filter === 'all' || card.dataset.tag === filter) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
