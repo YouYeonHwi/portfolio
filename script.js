@@ -4,12 +4,59 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   initLoadingScreen();
+  renderProjectCards();
   initCustomCursor();
-  initThreeScene();
-  initScrollAnimations();
-  initGameShowcase();
+  if (window.THREE) {
+    initThreeScene();
+  } else {
+    document.body.classList.add("no-webgl");
+  }
+  if (window.gsap && window.ScrollTrigger && window.Lenis) {
+    initScrollAnimations();
+  } else {
+    initBasicNavigation();
+  }
   initAmbientSound();
+  initProjectInteractions();
+  initContactTransmission();
 });
+
+function renderProjectCards() {
+  const grid = document.getElementById("projects-grid");
+  const projects = window.PORTFOLIO_PROJECTS || [];
+  if (!grid || !projects.length) return;
+
+  grid.innerHTML = projects.map((project) => {
+    const coverStyle = project.coverImage
+      ? ` style="background-image: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.74)), url('${project.coverImage}');"`
+      : "";
+    const imageClass = project.coverImage ? " project-cover-image" : "";
+    const icon = project.coverImage ? "" : `<i class="${project.icon}"></i>`;
+    const tech = project.tech.map((item) => `<span>${item}</span>`).join("");
+    const categoryTone = project.border === "cyan" ? "neon-cyan" : project.border === "orange" ? "neon-orange" : "neon-purple";
+
+    return `
+      <a class="hud-card project-card project-link-card" href="${project.href}" data-tilt aria-label="${project.title} 소개 페이지 열기">
+        <div class="project-image-placeholder border-${project.border}${imageClass}"${coverStyle}>
+          ${icon}
+          <div class="project-overlay-glow"></div>
+        </div>
+        <div class="project-info">
+          <span class="project-category ${categoryTone}"><i class="${project.icon}"></i> ${project.category}</span>
+          <h3 class="project-name">${project.title}</h3>
+          <div class="project-meta">
+            <span class="status-pill ${project.statusClass}">${project.status}</span>
+            <span>${project.subtitle}</span>
+          </div>
+          <p class="project-desc">${project.summary}</p>
+          <div class="project-tech">${tech}</div>
+          <div class="project-impact">${project.impact}</div>
+          <div class="project-card-link">소개 페이지 보기 <i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+      </a>
+    `;
+  }).join("");
+}
 
 // 1. 커스텀 마우스 HUD 커서 로직
 function initCustomCursor() {
@@ -69,17 +116,18 @@ function initLoadingScreen() {
 
   let progress = 0;
   const loadingLogs = [
-    "> CONNECTING TO CORE DATABASE...",
-    "> INITIATING 3D GRAPHICS RENDERER...",
-    "> LOADING VIRTUAL ENVIRONMENT ASSETS...",
-    "> RESOLVING PORTFOLIO IDENTITY MODULE...",
-    "> STABILIZING SHADER GENERATORS...",
-    "> SYNCHRONIZING WITH HUMAN COGNITIVE INTERFACE...",
-    "> SYSTEMS OPERATIONAL. ACCESS GRANTED."
+    "> 포트폴리오 기본 정보를 정리하는 중...",
+    "> 3D 배경과 파티클을 준비하는 중...",
+    "> 프로젝트·연구·강의 섹션을 연결하는 중...",
+    "> 프로젝트별 소개 페이지를 준비하는 중...",
+    "> 화면 전환과 스크롤 동작을 확인하는 중...",
+    "> 방문자가 읽기 편하도록 한글 UI를 적용하는 중...",
+    "> 준비 완료. 입장할 수 있습니다."
   ];
 
   // 로그 점진적 생성
   let logIndex = 0;
+  logsContainer.innerHTML = "";
   function addLog() {
     if (logIndex < loadingLogs.length) {
       const p = document.createElement("p");
@@ -109,23 +157,35 @@ function initLoadingScreen() {
 
   // 포트폴리오 메인 화면 진입
   btnEnter.addEventListener("click", () => {
+    const enterPortfolio = () => {
+      loadingScreen.style.display = "none";
+      document.body.classList.remove("loading-state");
+      
+      // 메인 화면 진입 후 Hero 섹션 텍스트 애니메이션 작동
+      animateHeroText();
+      
+      // ScrollTrigger 새로고침으로 현재 위치 기반 올바른 섹션 감지
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
+    };
+
+    if (!window.gsap) {
+      enterPortfolio();
+      return;
+    }
+
     gsap.to(loadingScreen, {
       opacity: 0,
       duration: 1.2,
       ease: "power2.out",
-      onComplete: () => {
-        loadingScreen.style.display = "none";
-        document.body.classList.remove("loading-state");
-        
-        // 메인 화면 진입 후 Hero 섹션 텍스트 애니메이션 작동
-        animateHeroText();
-      }
+      onComplete: enterPortfolio
     });
   });
 }
 
 // Hero 섹션 텍스트 등장 애니메이션
 function animateHeroText() {
+  if (!window.gsap) return;
+
   gsap.from(".hero-intro-box", {
     y: 50,
     opacity: 0,
@@ -143,17 +203,68 @@ function animateHeroText() {
   });
 }
 
+function initBasicNavigation() {
+  const links = document.querySelectorAll('a[href^="#"]');
+  const sections = Array.from(document.querySelectorAll(".panel"));
+
+  links.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      const href = link.getAttribute("href");
+      if (!href || href === "#") return;
+      const target = document.querySelector(href);
+      if (!target) return;
+
+      e.preventDefault();
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  if (!("IntersectionObserver" in window)) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const index = sections.indexOf(entry.target);
+      if (index < 0) return;
+      targetSection = index;
+      updateHUDIndicator(index);
+      if (index === SECTION_INDEX.LECTURE) triggerStatsCounter();
+    });
+  }, { threshold: 0.45 });
+
+  sections.forEach((section) => observer.observe(section));
+}
+
 
 /* ==========================================================================
    THREE.JS 3D PARTICLE ENGINE
    ========================================================================== */
 
 let scene, camera, renderer, particleSystem;
-let particlesCount = 4000;
+let particlesCount = 2000;
 let particlePositions = [];
 let targetSection = 0;
 let mouseX3D = 0, mouseY3D = 0;
 let currentScrollProgress = 0;
+
+const SECTION_INDEX = {
+  HERO: 0,
+  PROJECTS: 1,
+  ABOUT: 2,
+  RESEARCH: 3,
+  LECTURE: 4,
+  CONTACT: 5
+};
+
+const SECTION_SELECTORS = ["#hero", "#projects", "#about", "#research", "#lecture", "#contact"];
+const SECTION_MORPH_TARGET = {
+  [SECTION_INDEX.HERO]: 0,
+  [SECTION_INDEX.PROJECTS]: 5,
+  [SECTION_INDEX.ABOUT]: 1,
+  [SECTION_INDEX.RESEARCH]: 2,
+  [SECTION_INDEX.LECTURE]: 3,
+  [SECTION_INDEX.CONTACT]: 6
+};
 
 // 각 섹션별 파티클 좌표 집합 저장
 const morphTargets = {
@@ -468,32 +579,33 @@ function animate() {
 
   const elapsedTime = clock.getElapsedTime();
   const positions = particleSystem.geometry.attributes.position.array;
+  const morphTargetIndex = SECTION_MORPH_TARGET[targetSection] ?? SECTION_INDEX.HERO;
   
   // 1. 입자 보간 (Morphing Lerp)
-  const currentTarget = morphTargets[targetSection];
-  const lerpSpeed = 0.06; // 보간 감도
+  const currentTarget = morphTargets[morphTargetIndex];
+  const lerpSpeed = 0.08; // 보간 감도 (0.06 -> 0.08로 상향)
 
   for (let i = 0; i < particlesCount * 3; i++) {
     positions[i] += (currentTarget[i] - positions[i]) * lerpSpeed;
   }
   
   // 미세 물리 움직임 / 노이즈 가미
-  if (targetSection === 0) {
+  if (morphTargetIndex === 0) {
     // 코어 주위를 천천히 공전
     particleSystem.rotation.y = elapsedTime * 0.05;
     particleSystem.rotation.x = elapsedTime * 0.02;
-  } else if (targetSection === 1) {
+  } else if (morphTargetIndex === 1) {
     // 3개 그룹으로 자전 효과
     particleSystem.rotation.y = elapsedTime * 0.04;
     particleSystem.rotation.x = 0;
-  } else if (targetSection === 2) {
+  } else if (morphTargetIndex === 2) {
     // 인공 신경망 노드 실시간 미세 파동
     particleSystem.rotation.y = elapsedTime * 0.03;
     particleSystem.rotation.x = Math.sin(elapsedTime * 0.1) * 0.1;
     
     // 리서치 네트워크 라인 실시간 연결 업데이트
     updateNetworkLines();
-  } else if (targetSection === 3) {
+  } else if (morphTargetIndex === 3) {
     // 물결 그리드 일렁임 효과
     particleSystem.rotation.y = elapsedTime * 0.02;
     particleSystem.rotation.x = 0.3; // 비스듬히 눕힘
@@ -505,7 +617,7 @@ function animate() {
       const zVal = positions[idx+2];
       positions[idx+1] = Math.sin(xVal * 0.1 + elapsedTime * 1.5) * Math.cos(zVal * 0.1 + elapsedTime * 1.0) * 8;
     }
-  } else if (targetSection === 4) {
+  } else if (morphTargetIndex === 4) {
     // 안개 낀 문경새재 산악 지형 - 천천히 흘러가게 회전
     particleSystem.rotation.y = elapsedTime * 0.01;
     particleSystem.rotation.x = 0.15;
@@ -519,11 +631,11 @@ function animate() {
         positions[randIdx + 1] = morphTargets[4][randIdx + 1]; // 원래 바닥 산 높이로 리셋
       }
     }
-  } else if (targetSection === 5) {
+  } else if (morphTargetIndex === 5) {
     // 프로젝트 3D 입체 큐브 격자 회전
     particleSystem.rotation.y = elapsedTime * 0.06;
     particleSystem.rotation.x = elapsedTime * 0.03;
-  } else if (targetSection === 6) {
+  } else if (morphTargetIndex === 6) {
     // 연락처 홀로그램 코어 - 중앙 코어 수축/이완 맥동
     particleSystem.rotation.y = -elapsedTime * 0.04;
     particleSystem.rotation.x = elapsedTime * 0.02;
@@ -534,7 +646,7 @@ function animate() {
   }
 
   // 타겟 섹션이 리서치가 아닌 경우 라인 숨기기
-  if (targetSection !== 2 && networkLines.material.opacity > 0) {
+  if (morphTargetIndex !== 2 && networkLines.material.opacity > 0) {
     networkLines.material.opacity -= 0.05;
   }
 
@@ -603,30 +715,32 @@ function updateNetworkLines() {
    LENIS SMOOTH SCROLL & GSAP SCROLLTRIGGER INTEGRATION
    ========================================================================== */
 
+let lenisInstance; // Lenis 전역 참조 변수
+
 function initScrollAnimations() {
-  // 1. Lenis Smooth Scroll 초기화
-  const lenis = new Lenis({
-    duration: 1.4,
+  // 1. Lenis Smooth Scroll 초기화 (민첩하고 가볍게 세팅)
+  lenisInstance = new Lenis({
+    duration: 1.0,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
-    wheelMultiplier: 1.0,
+    wheelMultiplier: 1.1,
     touchMultiplier: 1.5,
     infinite: false,
   });
 
   function raf(time) {
-    lenis.raf(time);
+    lenisInstance.raf(time);
     requestAnimationFrame(raf);
   }
   requestAnimationFrame(raf);
 
   // Lenis 스크롤 변화에 맞춰 GSAP ScrollTrigger 자동 갱신
-  lenis.on("scroll", () => {
+  lenisInstance.on("scroll", () => {
     ScrollTrigger.update();
   });
 
   gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
+    lenisInstance.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
 
@@ -642,30 +756,30 @@ function initScrollAnimations() {
         if (self.isActive) {
           targetSection = index;
           updateHUDIndicator(index);
-          
-          // 강연(Lecture) 대시보드 스탯 카운팅 트리거
-          if (index === 3) {
-            triggerStatsCounter();
-          }
+          if (index === SECTION_INDEX.LECTURE) triggerStatsCounter();
         }
       }
     });
 
-    // 콘텐츠 내 요소들 페이드인 트랜지션
-    const content = panel.querySelector(".hud-card, .hud-box, .about-grid, .lecture-grid, .game-showcase-container, .projects-grid, .contact-container");
-    if (content) {
-      gsap.from(content, {
-        scrollTrigger: {
-          trigger: panel,
-          start: "top 70%",
-          toggleActions: "play none none reverse"
-        },
-        opacity: 0,
-        y: 60,
-        duration: 1.2,
-        ease: "power2.out"
-      });
-    }
+    // 콘텐츠 페이드인 트랜지션
+    const fadeTargets = panel.querySelectorAll(".hud-card, .hud-box, .about-grid, .lecture-grid, .game-showcase-container, .projects-grid, .contact-container, .section-header, .research-container, .traditional-frame, .game-media-panel");
+    fadeTargets.forEach((el, elIdx) => {
+      gsap.fromTo(el,
+        { opacity: 0, y: 40 },
+        {
+          scrollTrigger: {
+            trigger: panel,
+            start: "top 80%",
+            toggleActions: "play none none reverse"
+          },
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          delay: elIdx * 0.1,
+          ease: "power2.out"
+        }
+      );
+    });
   });
 
   // 전체 스크롤 진행율 감시하여 스크롤 필링바 채우기
@@ -678,26 +792,145 @@ function initScrollAnimations() {
     }
   });
 
-  // 네비게이션 클릭 이벤트 스크롤 스무스 연결
+  // 네비게이션 클릭 이벤트 스크롤 스무스 연결 (휠 락 및 타겟 강제 즉시 매핑)
   const navItems = document.querySelectorAll(".nav-item");
   const bullets = document.querySelectorAll(".bullet");
+  const sections = SECTION_SELECTORS;
 
-  navItems.forEach((item) => {
+  navItems.forEach((item, idx) => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
-      const href = item.getAttribute("href");
-      lenis.scrollTo(href);
+      isScrolling = true;
+      
+      targetSection = idx;
+      updateHUDIndicator(idx);
+      if (idx === SECTION_INDEX.LECTURE) triggerStatsCounter();
+      
+      lenisInstance.scrollTo(sections[idx], {
+        duration: 1.1,
+        ease: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        onComplete: () => {
+          setTimeout(() => {
+            isScrolling = false;
+          }, 250);
+        }
+      });
     });
   });
 
   bullets.forEach((bullet) => {
     bullet.addEventListener("click", (e) => {
       e.preventDefault();
-      const sections = ["#hero", "#about", "#research", "#lecture", "#game", "#projects", "#contact"];
       const targetIdx = parseInt(bullet.getAttribute("data-section"));
-      lenis.scrollTo(sections[targetIdx]);
+      isScrolling = true;
+      
+      targetSection = targetIdx;
+      updateHUDIndicator(targetIdx);
+      if (targetIdx === SECTION_INDEX.LECTURE) triggerStatsCounter();
+      
+      lenisInstance.scrollTo(sections[targetIdx], {
+        duration: 1.1,
+        ease: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        onComplete: () => {
+          setTimeout(() => {
+            isScrolling = false;
+          }, 250);
+        }
+      });
     });
   });
+
+  // 3. 원페이지(Full-Page) 고품질 스냅 스크롤 구현 (데스크톱 전용)
+  let isScrolling = false;
+
+  window.addEventListener("wheel", (e) => {
+    // 모바일/태블릿 기기에서는 세로 너비가 짧아 내용이 잘릴 수 있으므로 스냅 스크롤을 비활성화하고 자연스러운 네이티브 스크롤 허용
+    if (window.innerWidth <= 1024) return;
+    
+    // 시스템 부팅 로딩 중일 때는 잠금
+    if (document.body.classList.contains("loading-state")) return;
+
+    const activePanel = panels[targetSection];
+    if (activePanel && activePanel.scrollHeight > window.innerHeight * 1.12) return;
+    
+    // 현재 스크롤 애니메이션이 수행 중이면 이벤트 전파 및 기본 동작 차단
+    if (isScrolling) {
+      e.preventDefault();
+      return;
+    }
+
+    const delta = e.deltaY;
+    if (Math.abs(delta) < 25) return; // 미세 휠 감지 제거
+
+    let nextSec = targetSection;
+    if (delta > 0) {
+      nextSec = Math.min(nextSec + 1, SECTION_SELECTORS.length - 1);
+    } else {
+      nextSec = Math.max(nextSec - 1, 0);
+    }
+
+    if (nextSec !== targetSection) {
+      e.preventDefault(); // 화면 덜컥거림 방지를 위해 기본 휠 동작 차단
+      isScrolling = true;
+      
+      targetSection = nextSec;
+      updateHUDIndicator(nextSec);
+      if (nextSec === SECTION_INDEX.LECTURE) triggerStatsCounter();
+      
+      lenisInstance.scrollTo(sections[nextSec], {
+        duration: 1.0,
+        ease: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        onComplete: () => {
+          // 관성 휠 스크롤이 누적되어 한 번에 여러 칸이 넘어가지 않도록 250ms의 쿨다운 설정
+          setTimeout(() => {
+            isScrolling = false;
+          }, 250);
+        }
+      });
+    }
+  }, { passive: false });
+
+  // 모바일 사용자를 위한 터치 스와이프 페이지 전환 (마찬가지로 1024px 이하 비활성화)
+  let touchStartY = 0;
+  window.addEventListener("touchstart", (e) => {
+    if (window.innerWidth <= 1024) return;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  window.addEventListener("touchend", (e) => {
+    if (window.innerWidth <= 1024) return;
+    if (document.body.classList.contains("loading-state")) return;
+    if (isScrolling) return;
+
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffY = touchStartY - touchEndY;
+
+    if (Math.abs(diffY) < 50) return; // 미세 터치 제거
+
+    let nextSec = targetSection;
+    if (diffY > 0) {
+      nextSec = Math.min(nextSec + 1, SECTION_SELECTORS.length - 1);
+    } else {
+      nextSec = Math.max(nextSec - 1, 0);
+    }
+
+    if (nextSec !== targetSection) {
+      isScrolling = true;
+      
+      targetSection = nextSec;
+      updateHUDIndicator(nextSec);
+      if (nextSec === SECTION_INDEX.LECTURE) triggerStatsCounter();
+      
+      lenisInstance.scrollTo(sections[nextSec], {
+        duration: 0.9,
+        onComplete: () => {
+          setTimeout(() => {
+            isScrolling = false;
+          }, 200);
+        }
+      });
+    }
+  }, { passive: true });
 }
 
 // HUD 인디케이터 업데이트
@@ -727,9 +960,12 @@ function triggerStatsCounter() {
   const statHours = document.getElementById("stat-hours");
   const statStudents = document.getElementById("stat-students");
 
-  animateCounter(statYears, 0, 5, 1500);
-  animateCounter(statHours, 0, 1500, 2000);
-  animateCounter(statStudents, 0, 3000, 2000);
+  if (!statYears || !statHours || !statStudents) return;
+
+  [statYears, statHours, statStudents].forEach((stat, index) => {
+    const target = parseInt(stat.getAttribute("data-target"), 10) || 0;
+    animateCounter(stat, 0, target, 1200 + index * 250);
+  });
 }
 
 function animateCounter(element, start, end, duration) {
@@ -762,6 +998,8 @@ function initGameShowcase() {
   const indicators = document.querySelectorAll("#media-indicators .indicator");
   const btnPrev = document.getElementById("media-prev");
   const btnNext = document.getElementById("media-next");
+
+  if (!slides.length || !indicators.length || !btnPrev || !btnNext) return;
   
   let currentSlide = 0;
   
@@ -785,11 +1023,74 @@ function initGameShowcase() {
 
   // 6초마다 자동 슬라이드 전환
   setInterval(() => {
-    // 문경새재 섹션을 보고 있을 때만 작동
-    if (targetSection === 4) {
+    // 프로젝트 섹션을 보고 있을 때만 작동
+    if (targetSection === SECTION_INDEX.PROJECTS) {
       changeSlide(currentSlide + 1);
     }
   }, 6000);
+}
+
+function initProjectInteractions() {
+  const tiltCards = document.querySelectorAll("[data-tilt]");
+  const supportsHover = window.matchMedia("(pointer: fine)").matches;
+
+  if (supportsHover) {
+    tiltCards.forEach((card) => {
+      card.addEventListener("mousemove", (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const rotateY = ((x / rect.width) - 0.5) * 8;
+        const rotateX = ((0.5 - (y / rect.height)) * 8);
+
+        card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+      });
+
+      card.addEventListener("mouseleave", () => {
+        card.style.transform = "";
+      });
+    });
+  }
+
+  document.querySelectorAll(".lecture-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      const subject = document.getElementById("form-subject");
+      if (subject) subject.value = "lecture";
+    });
+  });
+}
+
+function initContactTransmission() {
+  const form = document.getElementById("contact-form");
+  if (!form) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const name = formData.get("name") || "";
+    const email = formData.get("email") || "";
+    const subjectType = formData.get("subject") || "general";
+    const message = formData.get("message") || "";
+    const subjectLabels = {
+      collaboration: "협업 제안",
+      lecture: "강의 의뢰",
+      research: "연구 논의",
+      general: "기타 문의"
+    };
+
+    const subject = `[여니 포트폴리오] ${subjectLabels[subjectType] || "문의"} - ${name}`;
+    const body = [
+      `성함/기관: ${name}`,
+      `회신 이메일: ${email}`,
+      `문의 유형: ${subjectLabels[subjectType] || subjectType}`,
+      "",
+      "상세 메시지:",
+      message
+    ].join("\n");
+
+    window.location.href = `mailto:dusgn@naver.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
 }
 
 
@@ -810,6 +1111,8 @@ let ambientBellTimer = null;
 
 function initAmbientSound() {
   const audioToggle = document.getElementById("audio-toggle");
+  if (!audioToggle) return;
+
   const audioIcon = document.getElementById("audio-icon");
   const audioText = audioToggle.querySelector(".audio-text");
 
@@ -845,13 +1148,13 @@ function initAmbientSound() {
       masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
       audioToggle.classList.remove("active");
       audioIcon.className = "fa-solid fa-volume-xmark";
-      audioText.innerText = "AUDIO OFF";
+      audioText.innerText = "소리 꺼짐";
     } else {
       // 재생 (페이드인)
       masterGain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 1.5);
       audioToggle.classList.add("active");
       audioIcon.className = "fa-solid fa-volume-high";
-      audioText.innerText = "AUDIO ON";
+      audioText.innerText = "소리 켜짐";
       
       // 사용자 클릭 효과음
       playClickBeep();
@@ -893,9 +1196,9 @@ function setupWindSynthesizer() {
     const time = audioCtx.currentTime;
     const lfo = Math.sin(time * 0.2) * Math.cos(time * 0.08); // 매우 불규칙하고 느린 바람
     
-    // 문경새재 섹션(4)일 때 안개 바람 소리를 더 굵고 서정적으로 키움
-    const targetBaseFreq = targetSection === 4 ? 300 : 450;
-    const targetQ = targetSection === 4 ? 4.0 : 2.0;
+    // 프로젝트 섹션에서는 조금 더 낮은 주파수의 배경음을 사용
+    const targetBaseFreq = targetSection === SECTION_INDEX.PROJECTS ? 300 : 450;
+    const targetQ = targetSection === SECTION_INDEX.PROJECTS ? 4.0 : 2.0;
     
     const freq = targetBaseFreq + lfo * 200 + (Math.abs(mouseX3D) * 15);
     
@@ -925,8 +1228,8 @@ function startAmbientBells() {
       // Sine파와 Triangle파를 믹스해 영롱한 동양풍 주파수 매칭
       osc.type = "triangle";
       
-      // 문경새재 섹션(4)일 때는 좀 더 그윽한 깊은 저음 방울소리, 그 외엔 높은 미래지향적 비프
-      const freq = targetSection === 4 
+      // 프로젝트 섹션에서는 좀 더 그윽한 깊은 저음 방울소리, 그 외엔 높은 미래지향적 비프
+      const freq = targetSection === SECTION_INDEX.PROJECTS 
         ? [329.63, 392.00, 440.00, 523.25][Math.floor(Math.random() * 4)] // E4, G4, A4, C5 (동양적 오음계 일부)
         : [880, 1046, 1318, 1760][Math.floor(Math.random() * 4)];        // 높은 네온 음
       
@@ -934,8 +1237,8 @@ function startAmbientBells() {
 
       // 음량 포락선 (Envelope) - 서서히 상승 후 아주 길게 감쇠 (풍경 소리 효과)
       bellGain.gain.setValueAtTime(0, now);
-      bellGain.gain.linearRampToValueAtTime(targetSection === 4 ? 0.04 : 0.015, now + 0.08);
-      bellGain.gain.exponentialRampToValueAtTime(0.0001, now + (targetSection === 4 ? 5.5 : 2.5));
+      bellGain.gain.linearRampToValueAtTime(targetSection === SECTION_INDEX.PROJECTS ? 0.04 : 0.015, now + 0.08);
+      bellGain.gain.exponentialRampToValueAtTime(0.0001, now + (targetSection === SECTION_INDEX.PROJECTS ? 5.5 : 2.5));
 
       // 에코 딜레이 효과 추가
       delay.delayTime.setValueAtTime(0.35, now);
