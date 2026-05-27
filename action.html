@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>유연휘 | YouYeonHwi 3D 액션 포트폴리오</title>
+  <meta name="description" content="유연휘(YouYeonHwi)의 프로젝트, 연구, 강의 이력을 빠른 화면 전환과 풀스크린 3D 액션 스타일로 보여주는 포트폴리오 버전입니다.">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #020308;
+      --panel: rgba(5, 8, 17, 0.78);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #f7fbff;
+      --muted: #a8b3c7;
+      --cyan: #00eaff;
+      --red: #ff334f;
+      --orange: #ff9d2e;
+      --green: #50ff9a;
+      --purple: #b46cff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      letter-spacing: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans KR", system-ui, sans-serif;
+      cursor: default;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    #action-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #020308;
+      z-index: 0;
+      cursor: default;
+    }
+
+    .noise,
+    .flash,
+    .speed-lines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .noise {
+      opacity: 0.16;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 4px),
+        repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,0.025) 18px 19px);
+      mix-blend-mode: screen;
+    }
+
+    .speed-lines {
+      opacity: 0;
+      background:
+        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+      transform: skewX(-18deg) translateX(-120%);
+    }
+
+    .flash {
+      opacity: 0;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    body.is-switching .flash {
+      animation: hitFlash 420ms ease-out;
+    }
+
+    body.is-switching .speed-lines {
+      animation: speedCut 520ms cubic-bezier(.18,.84,.28,1);
+    }
+
+    @keyframes hitFlash {
+      0% { opacity: 0; }
+      18% { opacity: 0.72; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes speedCut {
+      0% { opacity: 0; transform: skewX(-18deg) translateX(-120%); }
+      18% { opacity: 0.8; }
+      100% { opacity: 0; transform: skewX(-18deg) translateX(140%); }
+    }
+
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .topbar {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      top: 22px;
+      min-height: 58px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      pointer-events: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--orange);
+      box-shadow: 0 0 22px rgba(255, 157, 46, 0.34);
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav button {
+      min-height: 34px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 13px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      background: var(--text);
+      color: #060812;
+    }
+
+    .sound-link {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 6px;
+      background: rgba(0,0,0,0.42);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .deck {
+      position: absolute;
+      left: 40px;
+      top: 112px;
+      bottom: 44px;
+      width: min(620px, calc(100vw - 80px));
+      pointer-events: none;
+    }
+
+    .panel {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      max-height: 100%;
+      overflow: auto;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.42);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      transform: translateX(-44px) scale(0.96);
+      transition: opacity 220ms ease, transform 220ms ease;
+      pointer-events: none;
+      scrollbar-width: none;
+    }
+
+    .panel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .panel.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    body.is-switching .panel.active {
+      animation: panelImpact 440ms cubic-bezier(.12,.82,.21,1);
+    }
+
+    @keyframes panelImpact {
+      0% { transform: translateX(40px) scale(0.94); filter: blur(4px); }
+      55% { transform: translateX(-8px) scale(1.02); filter: blur(0); }
+      100% { transform: translateX(0) scale(1); }
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(0, 234, 255, 0.1);
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+
+    h1,
+    h2 {
+      line-height: 1.05;
+      font-weight: 950;
+    }
+
+    h1 {
+      font-size: 68px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      font-size: 44px;
+      margin-bottom: 16px;
+    }
+
+    .lead,
+    .panel p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .lead {
+      font-size: 18px;
+      margin-bottom: 24px;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 15px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+      box-shadow: 0 0 26px rgba(255, 51, 79, 0.3);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .metric {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 14px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .project-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .project-card {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .project-card.featured {
+      grid-template-columns: 130px 1fr;
+      border-color: rgba(255, 157, 46, 0.42);
+      box-shadow: inset 0 0 30px rgba(255, 157, 46, 0.05);
+    }
+
+    .project-thumb,
+    .icon-thumb {
+      min-height: 86px;
+      border-radius: 6px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .icon-thumb {
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.06);
+      color: var(--cyan);
+      font-size: 26px;
+    }
+
+    .project-card h3 {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .project-card p {
+      font-size: 13px;
+      margin-bottom: 9px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .info-card h3 {
+      font-size: 17px;
+      margin-bottom: 9px;
+    }
+
+    .info-card ul {
+      display: grid;
+      gap: 8px;
+      padding-left: 17px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stage-rail {
+      position: absolute;
+      right: 34px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: grid;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .stage-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.32);
+      background: rgba(255,255,255,0.12);
+      cursor: pointer;
+    }
+
+    .stage-dot.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      box-shadow: 0 0 18px rgba(255, 157, 46, 0.7);
+    }
+
+    .readout {
+      position: absolute;
+      right: 32px;
+      bottom: 30px;
+      width: 260px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: rgba(0,0,0,0.42);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .readout strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .mobile-hint {
+      display: none;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 980px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
+      #action-canvas {
+        height: 56vh;
+      }
+
+      .hud {
+        position: relative;
+        min-height: 100vh;
+        padding-top: 12px;
+      }
+
+      .topbar {
+        position: sticky;
+        left: auto;
+        right: auto;
+        top: 0;
+        width: calc(100% - 28px);
+        margin: 0 auto 18px;
+        padding: 12px 0;
+        align-items: flex-start;
+        flex-direction: column;
+        background: rgba(6, 8, 18, 0.88);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav {
+        width: 100%;
+        flex-wrap: wrap;
+        overflow-x: visible;
+        border-radius: 8px;
+      }
+
+      .deck {
+        position: relative;
+        left: auto;
+        top: auto;
+        bottom: auto;
+        width: calc(100% - 28px);
+        margin: 0 auto 34px;
+      }
+
+      .panel {
+        position: relative;
+        display: none;
+        max-height: none;
+        margin-bottom: 16px;
+        padding: 22px;
+        transform: none;
+      }
+
+      .panel.active {
+        display: block;
+      }
+
+      h1 {
+        font-size: 42px;
+      }
+
+      h2 {
+        font-size: 34px;
+      }
+
+      .lead {
+        font-size: 16px;
+      }
+
+      .stage-rail,
+      .readout {
+        display: none;
+      }
+
+      .mobile-hint {
+        display: block;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .topbar {
+        gap: 10px;
+      }
+
+      .brand {
+        font-size: 16px;
+      }
+
+      .sound-link {
+        min-height: 38px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      h2 {
+        font-size: 29px;
+      }
+
+      .metric-grid,
+      .split,
+      .project-card,
+      .project-card.featured {
+        grid-template-columns: 1fr;
+      }
+
+      .project-thumb,
+      .icon-thumb {
+        min-height: 150px;
+      }
+
+      .action-row .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="action-canvas" aria-hidden="true"></canvas>
+  <div class="noise"></div>
+  <div class="speed-lines"></div>
+  <div class="flash"></div>
+
+  <div class="hud">
+    <header class="topbar">
+      <a class="brand" href="#hero" data-jump="0">
+        <span class="brand-mark"><i class="fa-solid fa-bolt"></i></span>
+        <span>유연휘 YouYeonHwi 3D 액션</span>
+      </a>
+      <nav class="nav" aria-label="액션 섹션">
+        <button class="active" type="button" data-jump="0">인트로</button>
+        <button type="button" data-jump="1">프로젝트</button>
+        <button type="button" data-jump="2">연구</button>
+        <button type="button" data-jump="3">강의</button>
+        <button type="button" data-jump="4">연락</button>
+      </nav>
+      <a class="sound-link" href="index.html"><i class="fa-solid fa-cube"></i> 메인 보기</a>
+    </header>
+
+    <main class="deck" aria-live="polite">
+      <section class="panel active" id="hero" data-stage="0">
+        <span class="kicker">FULL 3D ACTION MODE</span>
+        <h1>연구, 자동화, 게임 개발을 고속 전환합니다.</h1>
+        <p class="lead">차분한 이력서가 아니라, 역량이 장면처럼 바뀌는 포트폴리오 버전입니다. 프로젝트는 빠르게 치고 들어오고, 3D 장면은 섹션마다 다른 속도와 색으로 반응합니다.</p>
+        <div class="action-row">
+          <button class="btn primary" type="button" data-jump="1"><i class="fa-solid fa-forward"></i> 프로젝트 진입</button>
+          <a class="btn" href="index.html"><i class="fa-solid fa-align-left"></i> 베이직 메인</a>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><strong>7</strong><span>프로젝트</span></div>
+          <div class="metric"><strong>5년+</strong><span>AI/자동화 강의</span></div>
+          <div class="metric"><strong>2</strong><span>문경새재 등록 플랫폼</span></div>
+        </div>
+        <p class="mobile-hint">모바일에서는 상단 메뉴를 눌러 장면을 전환할 수 있습니다.</p>
+      </section>
+
+      <section class="panel" id="projects" data-stage="1">
+        <span class="kicker">PROJECT STRIKE</span>
+        <h2>프로젝트</h2>
+        <div class="project-stack">
+          <a class="project-card featured" href="projects/seonbi.html">
+            <div class="project-thumb" style="background-image:url('https://cdn.akamai.steamstatic.com/steam/apps/1925860/capsule_616x353.jpg')"></div>
+            <div>
+              <h3>문경새재</h3>
+              <p>STOVE·Steam 등록작. 3인 팀에서 약 2년간 공동대표로 참여하며 MOB 코딩, 최적화, 사업계획서, 마케팅, 정부지원사업 1.5억 원 수주를 함께 수행했습니다.</p>
+              <div class="chips"><span class="chip">공동대표</span><span class="chip">3인 개발</span><span class="chip">MOB 코딩</span><span class="chip">1.5억 수주</span></div>
+            </div>
+          </a>
+          <a class="project-card" href="projects/portfolio-world.html">
+            <div class="icon-thumb"><i class="fa-solid fa-vr-cardboard"></i></div>
+            <div><h3>3D 포트폴리오 월드 엔진</h3><p>Three.js, GSAP, Lenis, Web Audio 기반의 현재 인터랙티브 웹.</p><div class="chips"><span class="chip">현재 사이트</span><span class="chip">Three.js</span></div></div>
+          </a>
+          <a class="project-card" href="projects/rag-agent.html">
+            <div class="icon-thumb"><i class="fa-solid fa-circle-nodes"></i></div>
+            <div><h3>개인화 RAG 지식 에이전트</h3><p>논문·강의자료·연구노트를 근거 기반 답변으로 바꾸는 지식 엔진 초안.</p><div class="chips"><span class="chip">RAG</span><span class="chip">LLM API</span></div></div>
+          </a>
+          <a class="project-card" href="projects/research-briefing.html">
+            <div class="icon-thumb"><i class="fa-solid fa-network-wired"></i></div>
+            <div><h3>리서치 브리핑 자동화</h3><p>뉴스·공지·기술 글을 수집, 정제, 요약해 실행 가능한 브리핑으로 정리합니다.</p><div class="chips"><span class="chip">Python</span><span class="chip">Playwright</span></div></div>
+          </a>
+        </div>
+      </section>
+
+      <section class="panel" id="research" data-stage="2">
+        <span class="kicker">RESEARCH CORE</span>
+        <h2>연구</h2>
+        <div class="split">
+          <div class="info-card">
+            <h3>RAG와 지식 필터링</h3>
+            <p>자료를 단순히 모으는 것이 아니라, 출처와 맥락을 유지한 채 사용자가 판단할 수 있는 답변으로 재구성합니다.</p>
+          </div>
+          <div class="info-card">
+            <h3>HCI와 설명 가능한 화면</h3>
+            <p>AI 결과가 왜 나왔는지, 어디를 믿어야 하는지, 다음 행동은 무엇인지 화면에서 바로 파악하게 만드는 구조를 고민합니다.</p>
+          </div>
+        </div>
+        <div class="action-row">
+          <a class="btn" href="projects/rag-agent.html">RAG 프로젝트 보기</a>
+          <a class="btn" href="projects/smart-factory-pipeline.html">스마트팩토리 구상 보기</a>
+        </div>
+      </section>
+
+      <section class="panel" id="lecture" data-stage="3">
+        <span class="kicker">LECTURE COMBO</span>
+        <h2>강의</h2>
+        <div class="split">
+          <div class="info-card">
+            <h3>주요 트랙</h3>
+            <ul>
+              <li>Python 기반 데이터 처리와 자동화</li>
+              <li>LLM/RAG 실무 적용</li>
+              <li>업무 자동화와 리서치 자동화</li>
+              <li>프론트엔드와 모바일 앱 기초 설계</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h3>강의 방식</h3>
+            <p>개념 설명에서 끝내지 않고, 입력 데이터부터 결과 검증까지 직접 움직이는 실습 흐름으로 구성합니다.</p>
+          </div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><strong>5년+</strong><span>강의 경력</span></div>
+          <div class="metric"><strong>4</strong><span>핵심 교육 트랙</span></div>
+          <div class="metric"><strong>6</strong><span>적용 분야</span></div>
+        </div>
+      </section>
+
+      <section class="panel" id="contact" data-stage="4">
+        <span class="kicker">FINAL LOCK-ON</span>
+        <h2>연락</h2>
+        <p class="lead">AI 연구, 업무 자동화, 게임 프로젝트, 강의 의뢰를 빠르게 논의할 수 있습니다.</p>
+        <div class="action-row">
+          <a class="btn primary" href="mailto:dusgn@naver.com"><i class="fa-solid fa-paper-plane"></i> dusgn@naver.com</a>
+          <a class="btn" href="index.html">베이직 메인</a>
+          <a class="btn" href="interactive.html">인터랙티브 버전</a>
+        </div>
+      </section>
+    </main>
+
+    <div class="stage-rail" aria-label="빠른 장면 이동">
+      <button class="stage-dot active" type="button" data-jump="0" aria-label="인트로"></button>
+      <button class="stage-dot" type="button" data-jump="1" aria-label="프로젝트"></button>
+      <button class="stage-dot" type="button" data-jump="2" aria-label="연구"></button>
+      <button class="stage-dot" type="button" data-jump="3" aria-label="강의"></button>
+      <button class="stage-dot" type="button" data-jump="4" aria-label="연락"></button>
+    </div>
+
+    <aside class="readout">
+      <strong id="readout-title">INTRO / 00</strong>
+      <span id="readout-copy">마우스 휠 또는 방향키로 장면을 빠르게 넘깁니다.</span>
+    </aside>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const stageMeta = [
+      { title: "INTRO / 00", copy: "기본 역량과 방향성을 고속 진입합니다.", color: 0xff334f, accent: 0x00eaff, camera: [0, 0.3, 9], ring: 0.8 },
+      { title: "PROJECTS / 01", copy: "출시 게임과 프로젝트 카드가 전면으로 돌입합니다.", color: 0xff9d2e, accent: 0xff334f, camera: [2.8, 0.6, 7.2], ring: 1.35 },
+      { title: "RESEARCH / 02", copy: "RAG, HCI, 지식 필터링 축으로 장면을 전환합니다.", color: 0x00eaff, accent: 0x50ff9a, camera: [-2.6, 1.4, 7.6], ring: 1.05 },
+      { title: "LECTURE / 03", copy: "강의 트랙과 실습형 교육 흐름을 압축합니다.", color: 0xb46cff, accent: 0x00eaff, camera: [0.2, -1.2, 8.4], ring: 1.6 },
+      { title: "CONTACT / 04", copy: "협업과 강의 문의로 마지막 타겟을 고정합니다.", color: 0x50ff9a, accent: 0xff9d2e, camera: [-2.2, 0.1, 6.8], ring: 0.9 }
+    ];
+
+    const panels = Array.from(document.querySelectorAll(".panel"));
+    const jumpers = Array.from(document.querySelectorAll("[data-jump]"));
+    const readoutTitle = document.getElementById("readout-title");
+    const readoutCopy = document.getElementById("readout-copy");
+    const query = new URLSearchParams(window.location.search);
+    const freezeForScreenshot = query.has("freeze");
+    let stage = 0;
+    let lastSwitch = 0;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    function setStage(next) {
+      const max = stageMeta.length - 1;
+      const clamped = Math.max(0, Math.min(max, next));
+      if (clamped === stage) return;
+      stage = clamped;
+      document.body.classList.remove("is-switching");
+      void document.body.offsetWidth;
+      document.body.classList.add("is-switching");
+      window.setTimeout(() => document.body.classList.remove("is-switching"), 560);
+
+      panels.forEach((panel, index) => panel.classList.toggle("active", index === stage));
+      jumpers.forEach((item) => item.classList.toggle("active", Number(item.dataset.jump) === stage));
+      readoutTitle.textContent = stageMeta[stage].title;
+      readoutCopy.textContent = stageMeta[stage].copy;
+    }
+
+    jumpers.forEach((item) => {
+      item.addEventListener("click", (event) => {
+        event.preventDefault();
+        setStage(Number(item.dataset.jump));
+      });
+    });
+
+    window.addEventListener("wheel", (event) => {
+      if (window.innerWidth <= 980) return;
+      const now = performance.now();
+      if (now - lastSwitch < 620 || Math.abs(event.deltaY) < 30) return;
+      lastSwitch = now;
+      setStage(stage + (event.deltaY > 0 ? 1 : -1));
+    }, { passive: true });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") setStage(stage + 1);
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") setStage(stage - 1);
+    });
+
+    let touchStart = 0;
+    window.addEventListener("touchstart", (event) => {
+      touchStart = event.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener("touchend", (event) => {
+      const diff = touchStart - event.changedTouches[0].clientY;
+      if (Math.abs(diff) > 60) setStage(stage + (diff > 0 ? 1 : -1));
+    }, { passive: true });
+
+    window.addEventListener("pointermove", (event) => {
+      pointerX = (event.clientX / window.innerWidth - 0.5) * 2;
+      pointerY = (event.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    const canvas = document.getElementById("action-canvas");
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020308, 0.034);
+
+    const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 120);
+    camera.position.set(0, 0.3, 9);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const glProbe = renderer.getContext();
+    const probeSize = 40;
+    const probePixels = new Uint8Array(probeSize * probeSize * 4);
+    window.__actionCanvasProbe = { frame: 0, lit: 0, total: probeSize * probeSize, ratio: 0 };
+    canvas.dataset.threeReady = "true";
+
+    const particleCount = window.innerWidth < 700 ? 850 : 1400;
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const base = [];
+    const color = new THREE.Color();
+
+    for (let i = 0; i < particleCount; i++) {
+      const radius = 2.2 + Math.random() * 13;
+      const angle = Math.random() * Math.PI * 2;
+      const layer = (Math.random() - 0.5) * 10;
+      const index = i * 3;
+      positions[index] = Math.cos(angle) * radius;
+      positions[index + 1] = layer;
+      positions[index + 2] = Math.sin(angle) * radius;
+      base.push({ radius, angle, layer, speed: 0.2 + Math.random() * 1.6 });
+      color.setHSL(0.55 + Math.random() * 0.16, 0.8, 0.55);
+      colors[index] = color.r;
+      colors[index + 1] = color.g;
+      colors[index + 2] = color.b;
+    }
+
+    const particles = new THREE.BufferGeometry();
+    particles.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    particles.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+      size: window.innerWidth < 700 ? 0.052 : 0.036,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false
+    });
+    const field = new THREE.Points(particles, particleMaterial);
+    scene.add(field);
+
+    const ringGroup = new THREE.Group();
+    const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xff334f, wireframe: true, transparent: true, opacity: 0.72 });
+    for (let i = 0; i < 5; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2 + i * 0.68, 0.015, 8, 100), ringMaterial.clone());
+      ring.rotation.x = Math.PI / 2 + i * 0.18;
+      ring.rotation.y = i * 0.34;
+      ringGroup.add(ring);
+    }
+    scene.add(ringGroup);
+
+    const shardGroup = new THREE.Group();
+    const shardGeometry = new THREE.IcosahedronGeometry(0.28, 0);
+    for (let i = 0; i < 28; i++) {
+      const material = new THREE.MeshBasicMaterial({ color: i % 2 ? 0x00eaff : 0xff9d2e, wireframe: true, transparent: true, opacity: 0.64 });
+      const shard = new THREE.Mesh(shardGeometry, material);
+      const a = (i / 28) * Math.PI * 2;
+      const r = 2.2 + (i % 7) * 0.35;
+      shard.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * 1.7, Math.sin(a) * r);
+      shard.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      shardGroup.add(shard);
+    }
+    scene.add(shardGroup);
+
+    const core = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.9, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.78 })
+    );
+    scene.add(core);
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+      renderer.setSize(width, height);
+    }
+    window.addEventListener("resize", resize);
+
+    function animate(timeMs) {
+      if (!freezeForScreenshot || timeMs < 1500) requestAnimationFrame(animate);
+      const time = timeMs * 0.001;
+      const meta = stageMeta[stage];
+      const targetColor = new THREE.Color(meta.color);
+      const accentColor = new THREE.Color(meta.accent);
+
+      for (let i = 0; i < particleCount; i++) {
+        const b = base[i];
+        const index = i * 3;
+        const pulse = Math.sin(time * (1.2 + stage * 0.25) + b.angle * 3) * 0.8;
+        const spiral = b.angle + time * (0.34 + stage * 0.14) * b.speed;
+        const radius = b.radius * (0.72 + stage * 0.09) + pulse;
+        positions[index] += (Math.cos(spiral) * radius - positions[index]) * 0.065;
+        positions[index + 1] += (b.layer * Math.cos(stage * 0.42) + Math.sin(time * b.speed + i) * (0.4 + stage * 0.16) - positions[index + 1]) * 0.06;
+        positions[index + 2] += (Math.sin(spiral) * radius - positions[index + 2]) * 0.065;
+        const mix = (Math.sin(time + i * 0.021) + 1) / 2;
+        color.copy(targetColor).lerp(accentColor, mix);
+        colors[index] += (color.r - colors[index]) * 0.035;
+        colors[index + 1] += (color.g - colors[index + 1]) * 0.035;
+        colors[index + 2] += (color.b - colors[index + 2]) * 0.035;
+      }
+
+      particles.attributes.position.needsUpdate = true;
+      particles.attributes.color.needsUpdate = true;
+
+      const targetCamera = meta.camera;
+      camera.position.x += (targetCamera[0] + pointerX * 0.35 - camera.position.x) * 0.06;
+      camera.position.y += (targetCamera[1] - pointerY * 0.22 - camera.position.y) * 0.06;
+      camera.position.z += (targetCamera[2] - camera.position.z) * 0.06;
+      camera.lookAt(0, 0, 0);
+
+      ringGroup.rotation.x = time * (0.22 + stage * 0.06);
+      ringGroup.rotation.y = time * (0.32 + stage * 0.08);
+      ringGroup.scale.setScalar(meta.ring + Math.sin(time * 2.4) * 0.025);
+      ringGroup.children.forEach((ring, index) => {
+        ring.material.color.lerp(targetColor, 0.08);
+        ring.rotation.z = time * (0.7 + index * 0.12);
+      });
+
+      shardGroup.rotation.y = -time * (0.45 + stage * 0.18);
+      shardGroup.rotation.x = Math.sin(time * 0.7) * 0.22;
+      shardGroup.children.forEach((shard, index) => {
+        shard.rotation.x += 0.012 + stage * 0.002;
+        shard.rotation.y += 0.018 + index * 0.0008;
+        shard.material.color.lerp(index % 2 ? accentColor : targetColor, 0.05);
+      });
+
+      core.rotation.x = time * (0.7 + stage * 0.08);
+      core.rotation.y = -time * (0.9 + stage * 0.1);
+      core.material.color.lerp(accentColor, 0.05);
+
+      renderer.render(scene, camera);
+      if (Math.floor(timeMs / 250) % 2 === 0) {
+        glProbe.readPixels(
+          Math.floor(canvas.width / 2 - probeSize / 2),
+          Math.floor(canvas.height / 2 - probeSize / 2),
+          probeSize,
+          probeSize,
+          glProbe.RGBA,
+          glProbe.UNSIGNED_BYTE,
+          probePixels
+        );
+        let lit = 0;
+        for (let i = 0; i < probePixels.length; i += 4) {
+          if (probePixels[i] + probePixels[i + 1] + probePixels[i + 2] > 24) lit++;
+        }
+        window.__actionCanvasProbe = {
+          frame: Math.round(timeMs),
+          lit,
+          total: probeSize * probeSize,
+          ratio: Number((lit / (probeSize * probeSize)).toFixed(4))
+        };
+        canvas.dataset.probeFrame = String(Math.round(timeMs));
+        canvas.dataset.probeLit = String(lit);
+        canvas.dataset.probeTotal = String(probeSize * probeSize);
+        canvas.dataset.probeRatio = String(Number((lit / (probeSize * probeSize)).toFixed(4)));
+      }
+    }
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

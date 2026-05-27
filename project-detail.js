@@ -36,11 +36,11 @@
   const prev = projects[(currentIndex - 1 + projects.length) % projects.length];
   const next = projects[(currentIndex + 1) % projects.length];
 
-  document.title = `${project.title} | 여니 프로젝트`;
+  document.title = `${project.title} | 유연휘 YouYeonHwi 프로젝트`;
 
   root.innerHTML = `
     <header class="detail-topbar">
-      <a href="../index.html#projects" class="detail-logo">여니 포트폴리오</a>
+      <a href="../index.html#projects" class="detail-logo">유연휘 YouYeonHwi 포트폴리오</a>
       <nav>
         <a href="../index.html#projects">프로젝트</a>
         <a href="../index.html#about">소개</a>

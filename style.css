@@ -155,10 +155,23 @@ body.hover-link .cursor-circle {
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
-/* Hide native cursor on desktop */
+/* Keep the native cursor visible. The custom HUD cursor was decorative, but it
+   can disappear over WebGL/browser overlays and make the page hard to use. */
+.custom-cursor {
+  display: none;
+}
+
 @media (pointer: fine) {
-  html, body, a, button, select, textarea, input {
-    cursor: none !important;
+  html, body {
+    cursor: default;
+  }
+
+  a, button, select, label, .project-card, .bullet, .sns-btn {
+    cursor: pointer;
+  }
+
+  input, textarea {
+    cursor: text;
   }
 }
 
@@ -2556,13 +2569,16 @@ body.no-webgl .webgl-canvas {
   }
 
   .detail-topbar {
+    position: static;
     align-items: flex-start;
     flex-direction: column;
   }
 
   .detail-topbar nav {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px 14px;
   }
 
   .detail-hero-copy,
